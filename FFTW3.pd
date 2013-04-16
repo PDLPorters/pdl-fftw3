@@ -22,11 +22,29 @@ pp_addhdr( '
 # about whether threading is desired or ir a large fft is desired. Old PDL::FFTW
 # did one thing, matlab does another, so I do not include this function at all
 
+
+
+
 # I define up to rank-10 FFTs. This is annoyingly arbitrary, but hopefully
 # should be sufficient
 for my $rank (1..$maxrank)
 {
   generateDefinitions($rank);
+}
+pp_export_nothing();
+
+pp_addxs('', `cat compute_plan_template.xs`);
+pp_addpm( {At => 'Top'}, scalar `cat FFTW3_header_include.pm` );
+
+
+for my $rank (1..$maxrank)
+{
+  pp_addpm({At => 'Bot'}, <<EOF );
+sub fft$rank { __fft_with_rank( $rank, \@_ ); }
+eval( "*PDL::fft$rank = \&fft$rank;" );
+EOF
+
+  pp_add_exported( "fft$rank" );
 }
 
 pp_done();
@@ -46,18 +64,20 @@ sub generateDefinitions
 
 # TODO worry about alignment and inplace
 
-  my $code = `cat template.c`;
-  $code =~ s/RANK/$rank/g;
+  my $code =  `cat template.c`;
+  $code    =~ s/RANK/$rank/g;
 
-  my %pp_def = ( HandleBad => 0,
-                 Pars => "in($dims_string); [o]out($dims_string);",
+  my %pp_def = ( HandleBad    => 0,
+                 Pars         => "in($dims_string); [o]out($dims_string);",
                  GenericTypes => [F,D],
-                 Code => $code,
+                 Code         => $code,
+                 OtherPars    => 'IV plan', # comes not from the user, but
+                                            # from the pre-fft code
 
                  # this is a private function so I don't want to create
                  # user-visible documentation or exports
-                 Doc => undef,
-#                 PMFunc => ''
+                 Doc          => undef,
+                 PMFunc       => ''
                );
   pp_def( $funcname, %pp_def );
 }
