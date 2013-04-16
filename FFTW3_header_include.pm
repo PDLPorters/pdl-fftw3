@@ -129,5 +129,6 @@ EOF
       $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $in, $out );
     }
 
+    return $existingPlans{$planID};
   }
 }
