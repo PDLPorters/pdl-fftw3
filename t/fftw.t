@@ -20,7 +20,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 45;
+  plan tests => 48;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -337,6 +337,19 @@ use constant approx_eps_single => 1e-3;
   # 4 bytes
   ok_should_reuse_plan( all( approx( fft2(float $x_slice2_connected), float($X_slice2_ref), approx_eps_single) ),
                         "2D FFTs threaded inside a 3D piddle - slice2 - connected - single precision" );
+
+
+  # I now try to fft INTO a slice. The out-of-slice pieces shouldn't be touched
+  my $x_orig = $x->copy;
+  fft2( $x_slice2_severed, $x_slice2_connected );
+  ok_should_reuse_plan( all( approx( $x_slice2_connected, $X_slice2_ref, approx_eps_double) ),
+                        "2D FFTs threaded inside a 3D piddle - slice2 - connected - in-slice correct" );
+
+  my $X_partialfft_ref = $x_orig->copy;
+  $X_partialfft_ref->slice(':,1:5,:,:') .= $x_slice2_connected;
+
+  ok( all( approx( $x, $X_partialfft_ref, approx_eps_double) ),
+      "2D FFTs threaded inside a 3D piddle - slice2 - connected - out-of-slice correct" );
 }
 
 
