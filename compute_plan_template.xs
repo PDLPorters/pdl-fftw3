@@ -1,7 +1,7 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
 void *
-compute_plan( rank, do_double_precision ,in, out )
+compute_plan( rank, do_double_precision, in, out )
   int rank
   bool do_double_precision
   pdl* in
