@@ -68,3 +68,16 @@ CODE:
 }
 OUTPUT:
  RETVAL
+
+
+
+bool
+is_same_data( in, out )
+  pdl* in
+  pdl* out
+CODE:
+{
+  RETVAL = in->data == out->data;
+}
+OUTPUT:
+ RETVAL

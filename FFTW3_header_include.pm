@@ -27,7 +27,15 @@ sub __fft_with_rank
   elsif( $Nargs == 1 )
   {
     $in = PDL::Core::topdl $_[0];
-    $out = PDL::null();
+    if( $in->is_inplace )
+    {
+      $out = $in;
+      $in->set_inplace(0);
+    }
+    else
+    {
+      $out = PDL::null();
+    }
   }
   else
   {
@@ -130,8 +138,12 @@ EOF
 
     # TODO if not F then D? is this how it works?
     my $do_double_precision = $in->get_datatype != $PDL_F;
-
-    my $planID = join('_', $rank, $do_double_precision, @$dims, @$in_dims_embed, @$out_dims_embed);
+    my $do_inplace = is_same_data( $in, $out );
+    my $planID = join('_',
+                      $rank,
+                      $do_double_precision,
+                      $do_inplace,
+                      @$dims, @$in_dims_embed, @$out_dims_embed);
     if ( !exists $existingPlans{$planID} )
     {
       $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $in, $out );

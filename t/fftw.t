@@ -20,7 +20,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 40;
+  plan tests => 45;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -335,5 +335,33 @@ sub ok_should_reuse_plan
   eval( 'fft1( $x, $f2 )' );
   ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
                         "Should be able to ask for output in the arglist" );
+}
 
+# inplace checks
+{
+  my $xorig = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
+
+  # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
+  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
+                  [-158.8841768587627,+17.7490974608742],
+                  [-73.8190960235587,-28.6459544426446],
+                  [-41.3271264002680,-38.7279671349711],
+                  [-21.2459848116453,-42.8475374738350],
+                  [-5.0000000000000,-45.0000000000000],
+                  [11.2459848116453,-46.0967344361641],
+                  [31.3271264002680,-45.9933924150247],
+                  [63.8190960235587,-42.4097736473563],
+                  [148.8841768587627,-13.0277379108784] );
+
+  my $x = $xorig->copy;
+  fft1($x, $x);
+  ok_should_make_plan( all( approx( $x, $Xref, approx_eps_double) ),
+                       'In-place test: fft1($x,$x)' );
+
+  $x = $xorig->copy;
+  fft1( $x->inplace );
+  ok_should_reuse_plan( all( approx( $x, $Xref, approx_eps_double) ),
+                        'In-place test:   fft1( $x->inplace )' );
+
+  ok( !$x->is_inplace, "After computation the in-place flag should be cleared" );
 }
