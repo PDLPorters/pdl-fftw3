@@ -22,7 +22,7 @@ sub __fft_with_rank
   if( $Nargs == 2 )
   {
     # all variables on stack, read in output and temp vars
-    ($in, $out) = map {PDL::Core::topdl $_} @_;
+    ($in, $out) = map {defined $_ ? PDL::Core::topdl($_) : $_} @_;
   }
   elsif( $Nargs == 1 )
   {
@@ -58,6 +58,12 @@ EOF
 
     for my $arg ( $in, $out )
     {
+      barf <<EOF unless defined $arg;
+fft$rank arguments must all be defined. If you want an auto-growing piddle, use 'null' such as
+ fft$rank( $in, $out = null )
+Giving up.
+EOF
+
       my $type = ref $arg;
       $type = 'scalar' unless defined $arg;
 
