@@ -122,6 +122,75 @@ use constant approx_eps_single => 1e-3;
      "1D FFTs threaded inside a 3D piddle" );
 }
 
+# try out some different ways of calling the module, make sure the argument
+# verification works
+{
+  eval( 'fft1( )' );
+  ok( $@, "Calling fft1 with no arguments should fail" );
+
+  eval( 'fft1(sequence(2,5), sequence(2,5), sequence(2,5) )' );
+  ok( $@, "Calling fft1 with too many arguments should fail" );
+
+  eval( 'fft1(sequence(5))' );
+  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 1");
+
+  eval( 'fft1(sequence(1,5))' );
+  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 2");
+
+  eval( 'fft1(sequence(3,5))' );
+  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 3");
+
+  eval( 'fft1(null))' );
+  ok( $@, "Calling fft1(null) should fail.");
+
+  eval( 'fft1( {} ))' );
+  ok( $@, "Calling fft1( {} ) should fail (want piddle input).");
+
+  eval( 'fft1(sequence(2,5), sequence(3,5) )' );
+  ok( $@, "Calling fft1 with mismatched arguments should fail" );
+
+  # should be able to ask for output in the arglist
+  my $x  = random(2,10);
+  my $f1 = fft1( $x );
+  my $f2;
+  eval( 'fft1( $x, $f2 )' );
+  ok( $@, "Calling fft1 with undef argument should fail" );
+
+  $f2 = null;
+  eval( 'fft1( $x, $f2 )' );
+  ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
+                        "Should be able to ask for output in the arglist" );
+}
+
+# inplace checks
+{
+  my $xorig = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
+
+  # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
+  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
+                  [-158.8841768587627,+17.7490974608742],
+                  [-73.8190960235587,-28.6459544426446],
+                  [-41.3271264002680,-38.7279671349711],
+                  [-21.2459848116453,-42.8475374738350],
+                  [-5.0000000000000,-45.0000000000000],
+                  [11.2459848116453,-46.0967344361641],
+                  [31.3271264002680,-45.9933924150247],
+                  [63.8190960235587,-42.4097736473563],
+                  [148.8841768587627,-13.0277379108784] );
+
+  my $x = $xorig->copy;
+  fft1($x, $x);
+  ok_should_make_plan( all( approx( $x, $Xref, approx_eps_double) ),
+                       'In-place test: fft1($x,$x)' );
+
+  $x = $xorig->copy;
+  fft1( $x->inplace );
+  ok_should_reuse_plan( all( approx( $x, $Xref, approx_eps_double) ),
+                        'In-place test:   fft1( $x->inplace )' );
+
+  ok( !$x->is_inplace, "After computation the in-place flag should be cleared" );
+}
+
 # lots of 2D ffts threaded in a 3d array
 {
   my $x = PDL::cat( sequence(6,5,4)**1.1,
@@ -294,74 +363,4 @@ sub ok_should_reuse_plan
       "$planname: should reuse an existing plan" );
 
   $Nplans = $PDL::FFTW3::_Nplans;
-}
-
-
-# try out some different ways of calling the module, make sure the argument
-# verification works
-{
-  eval( 'fft1( )' );
-  ok( $@, "Calling fft1 with no arguments should fail" );
-
-  eval( 'fft1(sequence(2,5), sequence(2,5), sequence(2,5) )' );
-  ok( $@, "Calling fft1 with too many arguments should fail" );
-
-  eval( 'fft1(sequence(5))' );
-  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 1");
-
-  eval( 'fft1(sequence(1,5))' );
-  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 2");
-
-  eval( 'fft1(sequence(3,5))' );
-  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 3");
-
-  eval( 'fft1(null))' );
-  ok( $@, "Calling fft1(null) should fail.");
-
-  eval( 'fft1( {} ))' );
-  ok( $@, "Calling fft1( {} ) should fail (want piddle input).");
-
-  eval( 'fft1(sequence(2,5), sequence(3,5) )' );
-  ok( $@, "Calling fft1 with mismatched arguments should fail" );
-
-  # should be able to ask for output in the arglist
-  my $x  = random(2,10);
-  my $f1 = fft1( $x );
-  my $f2;
-  eval( 'fft1( $x, $f2 )' );
-  ok( $@, "Calling fft1 with undef argument should fail" );
-
-  $f2 = null;
-  eval( 'fft1( $x, $f2 )' );
-  ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
-                        "Should be able to ask for output in the arglist" );
-}
-
-# inplace checks
-{
-  my $xorig = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
-
-  # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
-  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
-                  [-158.8841768587627,+17.7490974608742],
-                  [-73.8190960235587,-28.6459544426446],
-                  [-41.3271264002680,-38.7279671349711],
-                  [-21.2459848116453,-42.8475374738350],
-                  [-5.0000000000000,-45.0000000000000],
-                  [11.2459848116453,-46.0967344361641],
-                  [31.3271264002680,-45.9933924150247],
-                  [63.8190960235587,-42.4097736473563],
-                  [148.8841768587627,-13.0277379108784] );
-
-  my $x = $xorig->copy;
-  fft1($x, $x);
-  ok_should_make_plan( all( approx( $x, $Xref, approx_eps_double) ),
-                       'In-place test: fft1($x,$x)' );
-
-  $x = $xorig->copy;
-  fft1( $x->inplace );
-  ok_should_reuse_plan( all( approx( $x, $Xref, approx_eps_double) ),
-                        'In-place test:   fft1( $x->inplace )' );
-
-  ok( !$x->is_inplace, "After computation the in-place flag should be cleared" );
 }
