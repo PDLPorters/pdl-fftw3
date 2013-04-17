@@ -20,7 +20,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 29;
+  plan tests => 40;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -296,3 +296,44 @@ sub ok_should_reuse_plan
   $Nplans = $PDL::FFTW3::_Nplans;
 }
 
+
+# try out some different ways of calling the module, make sure the argument
+# verification works
+{
+  eval( 'fft1( )' );
+  ok( $@, "Calling fft1 with no arguments should fail" );
+
+  eval( 'fft1(sequence(2,5), sequence(2,5), sequence(2,5) )' );
+  ok( $@, "Calling fft1 with too many arguments should fail" );
+
+  eval( 'fft1(sequence(5))' );
+  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 1");
+
+  eval( 'fft1(sequence(1,5))' );
+  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 2");
+
+  eval( 'fft1(sequence(3,5))' );
+  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 3");
+
+  eval( 'fft1(null))' );
+  ok( $@, "Calling fft1(null) should fail.");
+
+  eval( 'fft1( {} ))' );
+  ok( $@, "Calling fft1( {} ) should fail (want piddle input).");
+
+  eval( 'fft1(sequence(2,5), sequence(3,5) )' );
+  ok( $@, "Calling fft1 with mismatched arguments should fail" );
+
+  # should be able to ask for output in the arglist
+  my $x  = random(2,10);
+  my $f1 = fft1( $x );
+  my $f2;
+  eval( 'fft1( $x, $f2 )' );
+  ok( $@, "Calling fft1 with undef argument should fail" );
+
+  $f2 = null;
+  eval( 'fft1( $x, $f2 )' );
+  ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
+                        "Should be able to ask for output in the arglist" );
+
+}
