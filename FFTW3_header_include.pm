@@ -61,7 +61,7 @@ EOF
     {
       barf <<EOF unless defined $arg;
 fft$rank arguments must all be defined. If you want an auto-growing piddle, use 'null' such as
- fft$rank( $in, $out = null )
+ fft$rank( \$in, \$out = null )
 Giving up.
 EOF
 
