@@ -85,7 +85,7 @@ EOF
     # validate dimensionality of the piddles
     for my $arg ( $in, $out )
     {
-      next if $arg->dim(0) == 0; # null is allowed for out
+      next if $arg->isnull; # null is allowed for out
 
       barf <<EOF if $arg->dim(0) != 2;
 fft$rank must have dim(0) == 2. This is the (real,imag) dimension.
@@ -101,7 +101,7 @@ EOF
       }
     }
 
-    if ( $out->dim(0) )
+    if ( ! $out->isnull )
     {
       for my $idim(0..$rank)
       {
@@ -134,7 +134,7 @@ EOF
 
     # TODO support nembed stuff here
     my $in_dims_embed  = $dims;
-    my $out_dims_embed = $out->dim(0) ? $dims : $dims;
+    my $out_dims_embed = $out->isnull ? $dims : $dims;
 
     # TODO if not F then D? is this how it works?
     my $do_double_precision = $in->get_datatype != $PDL_F;
