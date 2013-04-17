@@ -61,7 +61,10 @@ CODE:
                           FFTW_FORWARD, FFTW_ESTIMATE);
   }
 
-  RETVAL = PTR2IV(plan);
+  if( plan == NULL )
+    XSRETURN_UNDEF;
+  else
+    RETVAL = PTR2IV(plan);
 }
 OUTPUT:
  RETVAL

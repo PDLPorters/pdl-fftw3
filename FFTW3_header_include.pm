@@ -40,6 +40,7 @@ EOF
 
   validateArguments( $rank, $in, $out );
   my $plan = getPlan( $rank, $in, $out );
+  barf "fft$rank couldn't make a plan. Giving up\n" unless defined $plan;
 
   # I now have the arguments and the plan. Go!
   my $internal_function = "PDL::__fft$rank";
