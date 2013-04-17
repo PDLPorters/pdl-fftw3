@@ -2,6 +2,7 @@ use PDL::Types;
 
 # when I compute an FFTW plan, it goes here
 my %existingPlans;
+our $_Nplans = 0;
 
 # This file is included verbatim into the final module via pp_addpm()
 
@@ -127,6 +128,7 @@ EOF
     if ( !exists $existingPlans{$planID} )
     {
       $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $in, $out );
+      $_Nplans++;
     }
 
     return $existingPlans{$planID};
