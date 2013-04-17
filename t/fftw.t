@@ -4,19 +4,28 @@ use strict;
 use warnings;
 use PDL;
 
+my $Nplans = 0;
+
+# These are the unit tests for the various FFTW PDL bindings.
+#
+# Please be careful about rearranging these tests, since they depend on the
+# global FFTW plan cache
+#
+# Here I use GNU octave to compute the reference results. To transform 'format
+# long' octave output to the PDL input that appears here I use this:
+#
+# perl -ane 'if(/Column/) { print "],\n[" } if( @F == 3 ) { $F[2] =~ s/i//; print "[" . "$F[0],$F[1]$F[2]" . "],"; } END {print "],\n"} '
+
 use Test::More;
 
 BEGIN
 {
-  plan tests => 13;
+  plan tests => 29;
   use_ok( 'PDL::FFTW3' );
 }
 
 use constant approx_eps_double => 1e-8;
 use constant approx_eps_single => 1e-3;
-
-# The octave output is transformed to the pdl-style input with this:
-# perl -ane 'if(/Column/) { print "],\n[" } if( @F == 3 ) { $F[2] =~ s/i//; print "[" . "$F[0],$F[1]$F[2]" . "],"; } END {print "],\n"} '
 
 # 1D basic test
 {
@@ -34,11 +43,11 @@ use constant approx_eps_single => 1e-3;
                   [63.8190960235587,-42.4097736473563],
                   [148.8841768587627,-13.0277379108784] );
 
-  ok(all( approx( fft1($x), $Xref, approx_eps_double) ),
-     "Basic 1D complex FFT - double precision" );
+  ok_should_make_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
+                      "Basic 1D complex FFT - double precision" );
 
-  ok(all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
-     "Basic 1D complex FFT - single precision" );
+  ok_should_make_plan( all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
+                      "Basic 1D complex FFT - single precision" );
 }
 
 # 2D basic test
@@ -56,10 +65,10 @@ use constant approx_eps_single => 1e-3;
          [[-1.66387073419690e+01, - 1.92580879841980e+02],   [-6.12622041588522e-01, + 3.37582569424950e+00],   [-1.53265148779701e+00, + 1.46536486372098e+00],   [-2.10126095620459e+00, + 2.84635136279020e-01],   [-3.02129040241307e+00, - 1.62582569424950e+00]] );
 
 
-  ok(all( approx( fft2($x), $Xref, approx_eps_double) ),
+  ok_should_make_plan( all( approx( fft2($x), $Xref, approx_eps_double) ),
      "Basic 2D complex FFT - double precision" );
 
-  ok(all( approx( fft2(float $x), float($Xref), approx_eps_single) ),
+  ok_should_make_plan( all( approx( fft2(float $x), float($Xref), approx_eps_single) ),
      "Basic 2D complex FFT - single precision" );
 }
 
@@ -74,7 +83,7 @@ use constant approx_eps_single => 1e-3;
                   [[123.00000000000000,+8.38233234744176],[-4.57777220549656,+3.37502882270110],[-3.56316033314198,+0.13896084520131],[-3.00000000000000,-1.55390522269557],[-2.43683966685802,-3.32514076993644],[-1.42222779450344,-7.01727602271216]],
                   [[159.00000000000000,+17.40257062911774],[-3.87011652053375,+4.63147782374252],[-3.29187043104844,+1.20500010718478],[-3.00000000000000,-0.52218157372224],[-2.70812956895156,-2.25910150795298],[-2.12988347946625,-5.76082702167074]] );
 
-  ok(all( approx( fft1($x), $Xref, approx_eps_double) ),
+  ok_should_make_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
      "1D FFTs threaded inside a 2D piddle" );
 }
 
@@ -109,7 +118,7 @@ use constant approx_eps_single => 1e-3;
                            [[1.12490255099778e+03,+2.51201368661019e+02],[-6.93645047026591e+00,+8.25603193408341e+00],[-5.85406312069293e+00,+2.12356705077917e+00],[-5.31058753759640e+00,-9.43526187589065e-01],[-4.76559809982867e+00,-4.01120687194793e+00],[-3.67110104753344e+00,-1.01483705104741e+01]] ),
                       2,6,5,4 );
 
-  ok(all( approx( fft1($x), $Xref, approx_eps_double) ),
+  ok_should_reuse_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
      "1D FFTs threaded inside a 3D piddle" );
 }
 
@@ -153,15 +162,17 @@ use constant approx_eps_single => 1e-3;
                    [[-1.48137315640352e+02,-8.03755018459729e+01],[7.46992540366458e-02,-1.55140422934376e-01],[8.17655449197855e-02,-5.64025227538078e-02],[8.56906163946222e-02,-7.12349856999575e-03],[8.98748544483531e-02,+4.20897732548463e-02],[9.90136072387319e-02,+1.40302117404749e-01]],
                    [[-1.17049392363129e+02,-2.46859689910763e+02],[2.39899060049070e-01,-1.38101687968226e-01],[1.59658915211960e-01,-6.48727639912472e-04],[1.20144019881925e-01,+6.82934899895806e-02],[8.10343889012709e-02,+1.37369911169460e-01],[4.03481145874271e-03,+2.75896474493798e-01]]] );
 
-  ok(all( approx( fft2($x), $Xref, approx_eps_double) ),
+  ok_should_make_plan( all( approx( fft2($x), $Xref, approx_eps_double) ),
      "2D FFTs threaded inside a 3D piddle" );
 
-  ok(all( approx( fft2( float $x), float($Xref), approx_eps_single) ),
+  ok_should_make_plan( all( approx( fft2( float $x), float($Xref), approx_eps_single) ),
      "2D FFTs threaded inside a 3D piddle - single precision" );
 
 
   # Now I take a slice of the input matrix, and fft that. This makes sure the
-  # nembed logic works correctly
+  # nembed logic works correctly. It turns out that $P() in PP physicalizes the
+  # data, so no nembed logic currently exists, and stuff works anyway
+
   my $x_slice1_connected = $x->slice(':,0:4,:,:');
   my $x_slice1_severed   = $x_slice1_connected->copy;
 
@@ -196,11 +207,17 @@ use constant approx_eps_single => 1e-3;
           [[-1.23376794373435e+02,-6.69854082776712e+01],[6.41877749756504e-02,-1.04443436094924e-01],[6.98384223826521e-02,-2.92264510229911e-02],[7.36940494064069e-02,+1.71728447983243e-02],[8.05143239080554e-02,+9.20916536812421e-02]],
           [[-9.74417295843736e+01,-2.05659722932842e+02],[1.79920562610709e-01,-8.03744824636155e-02],[1.19169692096844e-01,+2.45697427068684e-02],[8.21878607839186e-02,+8.96232824108548e-02],[2.32671625274674e-02,+1.95170681256241e-01]]] );
 
-  ok(all( approx( fft2($x_slice1_severed), $X_slice1_ref, approx_eps_single) ),
+  ok_should_make_plan( all( approx( fft2($x_slice1_severed), $X_slice1_ref, approx_eps_double) ),
      "2D FFTs threaded inside a 3D piddle - slice1 - severed" );
 
-  ok(all( approx( fft2($x_slice1_connected), $X_slice1_ref, approx_eps_double) ),
+  ok_should_reuse_plan( all( approx( fft2($x_slice1_connected), $X_slice1_ref, approx_eps_double) ),
      "2D FFTs threaded inside a 3D piddle - slice1 - connected" );
+
+  # now go again with single precision. If $P() didn't physicalize its input,
+  # this would no longer be aligned like before, since the input has shifted by
+  # 4 bytes
+  ok_should_make_plan( all( approx( fft2(float $x_slice1_connected), float($X_slice1_ref), approx_eps_single) ),
+                       "2D FFTs threaded inside a 3D piddle - slice1 - connected - single precision" );
 
 
 
@@ -240,9 +257,42 @@ use constant approx_eps_single => 1e-3;
           [[-1.23519603679800e+02,-6.69735391127112e+01],[6.37479744806300e-02,-1.03380542771702e-01],[6.92370420039889e-02,-2.88488700507459e-02],[7.29858824833397e-02,+1.71294493033826e-02],[7.96224057648701e-02,+9.13717087078728e-02]],
           [[-9.76419555018576e+01,-2.05773543168977e+02],[1.78415452819879e-01,-7.93210083326257e-02],[1.18035987634609e-01,+2.45615120500224e-02],[8.12721813043989e-02,+8.89567757119387e-02],[2.26856083517065e-02,+1.93436447059624e-01]]] );
 
-  ok(all( approx( fft2($x_slice2_severed), $X_slice2_ref, approx_eps_single) ),
-     "2D FFTs threaded inside a 3D piddle - slice2 - severed" );
+  ok_should_reuse_plan( all( approx( fft2($x_slice2_severed), $X_slice2_ref, approx_eps_double) ),
+                        "2D FFTs threaded inside a 3D piddle - slice2 - severed" );
 
-  ok(all( approx( fft2($x_slice2_connected), $X_slice2_ref, approx_eps_double) ),
-     "2D FFTs threaded inside a 3D piddle - slice2 - connected" );
+  ok_should_reuse_plan( all( approx( fft2($x_slice2_connected), $X_slice2_ref, approx_eps_double) ),
+                        "2D FFTs threaded inside a 3D piddle - slice2 - connected" );
+
+  # now go again with single precision. If $P() didn't physicalize its input,
+  # this would no longer be aligned like before, since the input has shifted by
+  # 4 bytes
+  ok_should_reuse_plan( all( approx( fft2(float $x_slice2_connected), float($X_slice2_ref), approx_eps_single) ),
+                        "2D FFTs threaded inside a 3D piddle - slice2 - connected - single precision" );
 }
+
+
+
+
+
+sub ok_should_make_plan
+{
+  my ($value, $planname) = @_;
+  ok( $value, $planname );
+
+  ok( $PDL::FFTW3::_Nplans == $Nplans+1,
+      "$planname: should make a new plan" );
+
+  $Nplans = $PDL::FFTW3::_Nplans;
+}
+
+sub ok_should_reuse_plan
+{
+  my ($value, $planname) = @_;
+  ok( $value, $planname );
+
+  ok( $PDL::FFTW3::_Nplans == $Nplans,
+      "$planname: should reuse an existing plan" );
+
+  $Nplans = $PDL::FFTW3::_Nplans;
+}
+
