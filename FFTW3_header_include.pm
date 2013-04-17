@@ -32,7 +32,7 @@ sub __fft_with_rank
   else
   {
     barf( <<EOF );
-PDL::fft$rank must be given the input or the input and output as args.
+fft$rank must be given the input or the input and output as args.
 Exactly 1 or 2 arguments are required. Instead I got $Nargs args. Giving up.
 EOF
   }
@@ -62,7 +62,7 @@ EOF
       $type = 'scalar' unless defined $arg;
 
       barf <<EOF unless ref $arg && ref $arg eq 'PDL';
-pdl::fft$rank arguments must be of type 'PDL'. Instead I got an arg of
+fft$rank arguments must be of type 'PDL'. Instead I got an arg of
 type '$type'. Giving up.
 EOF
     }
@@ -73,7 +73,7 @@ EOF
       next if $arg->dim(0) == 0; # null is allowed for out
 
       barf <<EOF if $arg->dim(0) != 2;
-pdl::fft$rank must have dim(0) == 2. This is the (real,imag) dimension.
+fft$rank must have dim(0) == 2. This is the (real,imag) dimension.
 Giving up.
 EOF
 
@@ -101,7 +101,7 @@ EOF
 
       if( $in->get_datatype != $out->get_datatype )
       {
-        barf "pdl::fft$rank given inputs/outputs of mismatched types. Giving up.";
+        barf "fft$rank given inputs/outputs of mismatched types. Giving up.";
       }
     }
   }
