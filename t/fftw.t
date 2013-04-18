@@ -4,12 +4,8 @@ use strict;
 use warnings;
 use PDL;
 
-my $Nplans = 0;
-
-# These are the unit tests for the various FFTW PDL bindings.
-#
 # Please be careful about rearranging these tests, since they depend on the
-# global FFTW plan cache
+# global FFTW plan cache, and thus order can matter.
 #
 # Here I use GNU octave to compute the reference results. To transform 'format
 # long' octave output to the PDL input that appears here I use this:
@@ -32,6 +28,8 @@ BEGIN
 
 use constant approx_eps_double => 1e-8;
 use constant approx_eps_single => 1e-3;
+
+my $Nplans = 0;
 
 # 1D basic test
 {
