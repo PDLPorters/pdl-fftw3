@@ -15,7 +15,10 @@ our $_last_do_double_precision;
 # make it. Thus the PP-based internals can be guaranteed that the plan exists
 sub __fft_with_rank
 {
-  my $rank = shift;
+  my $rank         = shift;
+  my $thisfunction = shift;
+
+  my $do_inverse_fft = $thisfunction =~ /^i/;
 
   # first I parse the variables. This is a very direct translation of what PP
   # does normally when no PMCode is given
@@ -43,15 +46,15 @@ sub __fft_with_rank
   else
   {
     barf( <<EOF );
-fft$rank must be given the input or the input and output as args.
+$thisfunction must be given the input or the input and output as args.
 Exactly 1 or 2 arguments are required. Instead I got $Nargs args. Giving up.
 EOF
   }
 
-  validateArguments( $rank, $in, $out );
-  processTypes( $rank, \$in, \$out );
-  my $plan = getPlan( $rank, $in, $out );
-  barf "fft$rank couldn't make a plan. Giving up\n" unless defined $plan;
+  validateArguments( $rank, $thisfunction, $in, $out );
+  processTypes( $thisfunction, \$in, \$out );
+  my $plan = getPlan( $thisfunction, $rank, $do_inverse_fft, $in, $out );
+  barf "$thisfunction couldn't make a plan. Giving up\n" unless defined $plan;
 
   # I now have the arguments and the plan. Go!
   my $internal_function = "PDL::__fft$rank";
@@ -66,13 +69,13 @@ EOF
 
   sub validateArguments
   {
-    my ($rank, $in, $out) = @_;
+    my ($rank, $thisfunction, $in, $out) = @_;
 
     for my $arg ( $in, $out )
     {
       barf <<EOF unless defined $arg;
-fft$rank arguments must all be defined. If you want an auto-growing piddle, use 'null' such as
- fft$rank( \$in, \$out = null )
+$thisfunction arguments must all be defined. If you want an auto-growing piddle, use 'null' such as
+ $thisfunction( \$in, \$out = null )
 Giving up.
 EOF
 
@@ -80,7 +83,7 @@ EOF
       $type = 'scalar' unless defined $arg;
 
       barf <<EOF unless ref $arg && ref $arg eq 'PDL';
-fft$rank arguments must be of type 'PDL'. Instead I got an arg of
+$thisfunction arguments must be of type 'PDL'. Instead I got an arg of
 type '$type'. Giving up.
 EOF
     }
@@ -91,7 +94,7 @@ EOF
       next if $arg->isnull; # null is allowed for out
 
       barf <<EOF if $arg->dim(0) != 2;
-fft$rank must have dim(0) == 2. This is the (real,imag) dimension.
+$thisfunction must have dim(0) == 2. This is the (real,imag) dimension.
 Giving up.
 EOF
 
@@ -111,7 +114,7 @@ EOF
         if( $in->dim($idim) != $out->dim($idim) )
         {
           barf <<EOF;
-fft$rank was given input/output matrices of non-matching sizes.
+$thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
 EOF
         }
@@ -121,7 +124,7 @@ EOF
 
   sub processTypes
   {
-    my ($rank, $in, $out) = @_;
+    my ($thisfunction, $in, $out) = @_;
 
     # types:
     #
@@ -148,7 +151,7 @@ EOF
       my $out_type = $$out->type;
 
       barf <<EOF if $out_type < float;
-fft$rank can only generate 'float' or 'double' output. You gave an output
+$thisfunction can only generate 'float' or 'double' output. You gave an output
 of type '$out_type'. I can't change this so I give up
 EOF
 
@@ -168,7 +171,7 @@ EOF
 
   sub getPlan
   {
-    my ($rank, $in, $out) = @_;
+    my ($thisfunction, $rank, $do_inverse_fft, $in, $out) = @_;
 
     # I get the plan ID, check if I already have a plan, and make a new plan if I
     # don't already have one
@@ -188,11 +191,12 @@ EOF
     my $planID = join('_',
                       $rank,
                       $do_double_precision,
+                      $do_inverse_fft,
                       $do_inplace,
                       @$dims, @$in_dims_embed, @$out_dims_embed);
     if ( !exists $existingPlans{$planID} )
     {
-      $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $in, $out );
+      $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $do_inverse_fft, $in, $out );
       $_Nplans++;
     }
 

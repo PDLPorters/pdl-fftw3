@@ -1,9 +1,10 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
 void *
-compute_plan( rank, do_double_precision, in, out )
+compute_plan( rank, do_double_precision, do_inverse_fft, in, out )
   int rank
   bool do_double_precision
+  bool do_inverse_fft
   pdl* in
   pdl* out
 CODE:
@@ -26,6 +27,7 @@ CODE:
     out_dims_embed_row_first[i] = in->dims[ rank-i ];
   }
 
+  int direction = do_inverse_fft ? FFTW_BACKWARD : FFTW_FORWARD;
   // TODO if out is null, I should make a plan with a different pointer, maybe
   void* plan;
   if( !do_double_precision )
@@ -42,7 +44,7 @@ CODE:
                            (fftwf_complex*)in->data,  in_dims_embed_row_first,  1, 0,
                            (fftwf_complex*)out->data, out_dims_embed_row_first, 1, 0,
 
-                           FFTW_FORWARD, FFTW_ESTIMATE);
+                           direction, FFTW_ESTIMATE);
   }
   else
   {
@@ -58,7 +60,7 @@ CODE:
                           (fftw_complex*)in->data,  in_dims_embed_row_first,  1, 0,
                           (fftw_complex*)out->data, out_dims_embed_row_first, 1, 0,
 
-                          FFTW_FORWARD, FFTW_ESTIMATE);
+                          direction, FFTW_ESTIMATE);
   }
 
   if( plan == NULL )

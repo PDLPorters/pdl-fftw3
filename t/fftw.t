@@ -22,7 +22,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 69;
+  plan tests => 75;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -52,6 +52,9 @@ my $Nplans = 0;
 
   ok_should_make_plan( all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
                       "Basic 1D complex FFT - single precision" );
+
+  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x * $x->nelem/2.0, approx_eps_double) ),
+                      "Basic 1D complex FFT - inverse(forward) should be the same" );
 }
 
 # 2D basic test
@@ -74,6 +77,9 @@ my $Nplans = 0;
 
   ok_should_make_plan( all( approx( fft2(float $x), float($Xref), approx_eps_single) ),
      "Basic 2D complex FFT - single precision" );
+
+  ok_should_make_plan( all( approx( ifft2(fft2($x)), $x * $x->nelem/2.0, approx_eps_double) ),
+                      "Basic 2D complex FFT - inverse(forward) should be the same" );
 }
 
 # lots of 1D ffts threaded in a 2d array
@@ -89,6 +95,9 @@ my $Nplans = 0;
 
   ok_should_make_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
      "1D FFTs threaded inside a 2D piddle" );
+
+  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x * $x->dim(1), approx_eps_double) ),
+                      "1D FFTs threaded inside a 2D piddle - inverse(forward) should be the same" );
 }
 
 # lots of 1D ffts threaded in a 3d array

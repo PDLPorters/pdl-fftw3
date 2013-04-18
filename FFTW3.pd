@@ -40,11 +40,14 @@ pp_addpm( {At => 'Top'}, scalar `cat FFTW3_header_include.pm` );
 for my $rank (1..$maxrank)
 {
   pp_addpm({At => 'Bot'}, <<EOF );
-sub fft$rank { __fft_with_rank( $rank, \@_ ); }
+sub fft$rank { __fft_with_rank( $rank, "fft$rank",\@_ ); }
 eval( "*PDL::fft$rank = \&fft$rank;" );
+
+sub ifft$rank { __fft_with_rank( $rank, "ifft$rank", \@_ ); }
+eval( "*PDL::ifft$rank = \&ifft$rank;" );
 EOF
 
-  pp_add_exported( "fft$rank" );
+  pp_add_exported( "fft$rank", "ifft$rank" );
 }
 
 pp_done();
