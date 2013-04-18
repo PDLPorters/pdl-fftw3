@@ -20,7 +20,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 48;
+  plan tests => 67;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -351,6 +351,72 @@ use constant approx_eps_single => 1e-3;
   ok( all( approx( $x, $X_partialfft_ref, approx_eps_double) ),
       "2D FFTs threaded inside a 3D piddle - slice2 - connected - out-of-slice correct" );
 }
+
+# check the type logic
+{
+  my $x = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
+
+  # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
+  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
+                  [-158.8841768587627,+17.7490974608742],
+                  [-73.8190960235587,-28.6459544426446],
+                  [-41.3271264002680,-38.7279671349711],
+                  [-21.2459848116453,-42.8475374738350],
+                  [-5.0000000000000,-45.0000000000000],
+                  [11.2459848116453,-46.0967344361641],
+                  [31.3271264002680,-45.9933924150247],
+                  [63.8190960235587,-42.4097736473563],
+                  [148.8841768587627,-13.0277379108784] );
+
+  my $f = null;
+  fft1($x, $f);
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
+                        "Type-checking baseline" );
+  ok( $PDL::FFTW3::_last_do_double_precision,
+      "Unspecified FFTs should be double-precision" );
+
+  $f = null;
+  fft1($x->float, $f);
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
+                        "Float input/Unspecified output baseline" );
+  ok( ! $PDL::FFTW3::_last_do_double_precision,
+      "Float input/Unspecified output should do a float FFT" );
+
+  $f = null;
+  fft1($x->byte, $f);
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
+                        "Byte input/Unspecified output baseline" );
+  ok( ! $PDL::FFTW3::_last_do_double_precision,
+      "Byte input/Unspecified output should do a float FFT" );
+
+  $f = $x->zeros;
+  fft1($x, $f);
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
+                        "double input/double output baseline" );
+  ok( $PDL::FFTW3::_last_do_double_precision,
+      "double input/double output should do a double FFT" );
+
+  $f = $x->zeros->float;
+  fft1($x, $f);
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
+                        "double input/float output baseline" );
+  ok( ! $PDL::FFTW3::_last_do_double_precision,
+      "double input/float output should do a float FFT" );
+
+  $f = $x->zeros->byte;
+  eval( 'fft1($x, $f)' );
+  ok( $@, "Output to 'byte' should fail");
+
+  $f = $x->zeros;
+  fft1($x->float, $f->double );
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
+                        "float input/double output baseline" );
+  ok( $PDL::FFTW3::_last_do_double_precision,
+      "float input/double output should do a double FFT" );
+}
+
+
+
 
 
 

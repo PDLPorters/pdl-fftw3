@@ -2,7 +2,10 @@ use PDL::Types;
 
 # when I compute an FFTW plan, it goes here
 my %existingPlans;
+
+# these are for the unit tests
 our $_Nplans = 0;
+our $_last_do_double_precision;
 
 # This file is included verbatim into the final module via pp_addpm()
 
@@ -45,8 +48,8 @@ Exactly 1 or 2 arguments are required. Instead I got $Nargs args. Giving up.
 EOF
   }
 
-
   validateArguments( $rank, $in, $out );
+  processTypes( $rank, \$in, \$out );
   my $plan = getPlan( $rank, $in, $out );
   barf "fft$rank couldn't make a plan. Giving up\n" unless defined $plan;
 
@@ -113,11 +116,53 @@ Giving up.
 EOF
         }
       }
+    }
+  }
 
-      if( $in->get_datatype != $out->get_datatype )
-      {
-        barf "fft$rank given inputs/outputs of mismatched types. Giving up.";
-      }
+  sub processTypes
+  {
+    my ($rank, $in, $out) = @_;
+
+    # types:
+    #
+    # Input and output types must match, and I can only really deal with float and
+    # double. If given an output, I refuse to tweak the type of the output,
+    # otherwise, I upgrade to float and then to double
+
+    my $targetType;
+
+    if( $$out->isnull )
+    {
+      # Output is generated. I thus only worry about the type of the input. If
+      # It's not one of the types I like, upgrade to a float
+      my $in_type  = $$in->type;
+      $targetType = ( $in_type < float ) ? (float) : $in_type;
+
+      forceType( $in, $targetType );
+    }
+    else
+    {
+      # I'm given an output. Make sure this is of a type I can work with,
+      # otherwise give up
+
+      my $out_type = $$out->type;
+
+      barf <<EOF if $out_type < float;
+fft$rank can only generate 'float' or 'double' output. You gave an output
+of type '$out_type'. I can't change this so I give up
+EOF
+
+      $targetType = ( $out_type < float ) ? (float) : $out_type;
+
+      forceType( $in,  $targetType );
+      forceType( $out, $targetType );
+    }
+
+
+    sub forceType
+    {
+      my ($x, $type) = @_;
+      $$x = convert( $$x, $type ) unless $$x->type == $type;
     }
   }
 
@@ -136,8 +181,9 @@ EOF
     my $in_dims_embed  = $dims;
     my $out_dims_embed = $out->isnull ? $dims : $dims;
 
-    # TODO if not F then D? is this how it works?
-    my $do_double_precision = $in->get_datatype != $PDL_F;
+    my $do_double_precision = $in->get_datatype == $PDL_F ? 0 : 1;
+    $_last_do_double_precision = $do_double_precision;
+
     my $do_inplace = is_same_data( $in, $out );
     my $planID = join('_',
                       $rank,
