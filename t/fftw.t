@@ -16,11 +16,17 @@ my $Nplans = 0;
 #
 # perl -ane 'if(/Column/) { print "],\n[" } if( @F == 3 ) { $F[2] =~ s/i//; print "[" . "$F[0],$F[1]$F[2]" . "],"; } END {print "],\n"} '
 
+# I turn on the threading to stress things out a bit more, and to make sure it
+# works
+set_autopthread_targ(2);
+set_autopthread_size(0);
+
+
 use Test::More;
 
 BEGIN
 {
-  plan tests => 67;
+  plan tests => 69;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -118,7 +124,11 @@ use constant approx_eps_single => 1e-3;
                            [[1.12490255099778e+03,+2.51201368661019e+02],[-6.93645047026591e+00,+8.25603193408341e+00],[-5.85406312069293e+00,+2.12356705077917e+00],[-5.31058753759640e+00,-9.43526187589065e-01],[-4.76559809982867e+00,-4.01120687194793e+00],[-3.67110104753344e+00,-1.01483705104741e+01]] ),
                       2,6,5,4 );
 
-  ok_should_reuse_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
+  my $f = fft1($x);
+
+  is( get_autopthread_actual(), 2, "1D FFTs threaded inside a 3D piddle - CPU threading should work" );
+
+  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
      "1D FFTs threaded inside a 3D piddle" );
 }
 
@@ -342,6 +352,7 @@ use constant approx_eps_single => 1e-3;
   # I now try to fft INTO a slice. The out-of-slice pieces shouldn't be touched
   my $x_orig = $x->copy;
   fft2( $x_slice2_severed, $x_slice2_connected );
+  is( get_autopthread_actual(), 2, "1D FFTs threaded inside a 3D piddle - slice2 - connected - in-slice correct - CPU threading should work" );
   ok_should_reuse_plan( all( approx( $x_slice2_connected, $X_slice2_ref, approx_eps_double) ),
                         "2D FFTs threaded inside a 3D piddle - slice2 - connected - in-slice correct" );
 
