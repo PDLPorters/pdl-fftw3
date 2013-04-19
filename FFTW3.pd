@@ -67,7 +67,7 @@ sub generateDefinitions
 
 # TODO worry about alignment and inplace
 
-  my $code =  `cat template.c`;
+  my $code =  `cat template_complex.c`;
   $code    =~ s/RANK/$rank/g;
 
   my %pp_def = ( HandleBad    => 0,

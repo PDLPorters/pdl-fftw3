@@ -16,7 +16,7 @@ push @{$descriptor{LIBS}  },  `pkg-config --libs fftw3f fftw3`;
 $descriptor{INC} = '' unless defined $descriptor{INC};
 $descriptor{INC} .= `pkg-config --cflags fftw3f fftw3`;
 
-$descriptor{depend} = { 'FFTW3.pm' => 'template.c compute_plan_template.xs FFTW3_header_include.pm' };
+$descriptor{depend} = { 'FFTW3.pm' => 'template_complex.c compute_plan_template.xs FFTW3_header_include.pm' };
 
 
 WriteMakefile( %descriptor );
