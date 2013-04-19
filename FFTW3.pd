@@ -73,7 +73,7 @@ sub generateDefinitions
   unshift @dims, 'n0=2';
   my $dims_string = join(',', @dims);
 
-# TODO worry about alignment and inplace
+# TODO worry about alignment
 
   my $code =  `cat template_complex.c`;
 
