@@ -89,9 +89,18 @@ EOF
     }
 
     # validate dimensionality of the piddles
-    for my $arg ( $in, $out )
+    my @inout = ($in, $out);
+
+    for my $iarg ( 0..1 )
     {
-      next if $arg->isnull; # null is allowed for out
+      my $arg = $inout[$iarg];
+
+      if( $arg->isnull )
+      {
+        next if $iarg==1; # null is allowed for out
+
+        barf "$thisfunction: don't know what to do with a null input. Giving up";
+      }
 
       barf <<EOF if $arg->dim(0) != 2;
 $thisfunction must have dim(0) == 2. This is the (real,imag) dimension.
