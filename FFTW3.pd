@@ -100,7 +100,6 @@ sub generateDefinitions
 
   shift @dims_real; # get rid of the (real,imag) dimension for the real numbers
   $dims_complex[1] = 'nhalf'; # first complex dim is real->dim(0)/2+1
-  $pp_def{RedoDimsCode} = '$SIZE(nhalf) = (int)( $PDL(real)->dims[0]/2 ) + 1;';
   my $dims_real_string    = join(',', @dims_real);
   my $dims_complex_string = join(',', @dims_complex);
 
@@ -112,11 +111,31 @@ sub generateDefinitions
   $code_real_backward =~ s/INVERSE/1/g;
 
   # forward
+  # I have the real dimensions, but not nhalf
+  $pp_def{RedoDimsCode} = <<'EOF';
+if( $PDL(complex)->ndims <= 1 || $PDL(complex)->dims[1] <= 0 )
+  $SIZE(nhalf) = (int)( $PDL(real)->dims[0]/2 ) + 1;
+EOF
   $pp_def{Pars} = "real($dims_real_string); [o]complex($dims_complex_string);";
   $pp_def{Code} = $code_real_forward;
   pp_def( "__realfft$rank", %pp_def );
 
   # backward
+  # I have the complex dimensions. Have nhalf, but not n1
+  #
+  # if we're not given an output, there's an ambiguity. I want
+  # int($out->dim(0)/2) + 1 != $in->dim(1),
+  # however this could mean that
+  #  $out->dim(0) = 2*$in->dim(1) - 2
+  # or
+  #  $out->dim(0) = 2*$in->dim(1) - 1
+  #
+  # WITHOUT ANY OTHER INFORMATION, I ASSUME EVEN INPUT SIZES, SO I ASSUME
+  #  $out->dim(0) = 2*$in->dim(1) - 2
+  $pp_def{RedoDimsCode} = <<'EOF';
+if( $PDL(real)->dims[0] <= 0 )
+  $SIZE(n1) = 2*$PDL(complex)->dims[1] - 2;
+EOF
   $pp_def{Pars} = "complex($dims_complex_string); [o]real($dims_real_string);";
   $pp_def{Code} = $code_real_backward;
   pp_def( "__irealfft$rank", %pp_def );

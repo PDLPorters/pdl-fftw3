@@ -246,21 +246,20 @@ EOF
       }
       else
       {
-        barf "this is not yet supported";
         # Backward FFT. The input is complex, the output is real. $input->dim(0)
         # == 2, since that's the (real, imag) dimension. Furthermore,
         # $input->dim(1) should be int($output->dim(0)/2) + 1 (Section 2.4 of
         # the FFTW3 documentation)
 
-        barf <<EOF if int($in->dim(0)/2) + 1 != $out->dim(1);
+        barf <<EOF if int($out->dim(0)/2) + 1 != $in->dim(1);
 $thisfunction: mismatched first dimension:
-\$output->dim(1) == int(\$input->dim(0)/2) + 1 wasn't true.
+\$input->dim(1) == int(\$output->dim(0)/2) + 1 wasn't true.
 Giving up.
 EOF
 
         for my $idim (1..$rank)
         {
-          if ( $in->dim($idim) != $out->dim($idim + 1) )
+          if ( $out->dim($idim) != $in->dim($idim + 1) )
           {
             barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
@@ -329,16 +328,39 @@ EOF
     my @dims; # the dimensionality of the FFT
     if( !$is_real_fft )
     {
+      # complex FFT - ignore first dimension which is (real, imag)
       @dims = $in->dims;
       shift @dims;
     }
     elsif( !$do_inverse_fft )
     {
+      # forward real FFT - the input IS the dimensionality
       @dims = $in->dims;
     }
     else
     {
-      @dims = $out->dims;
+      # backward real FFT
+      #
+      # if we're given an output, then this is the dimensionality. Otherwise
+      # there's an ambiguity. I want int($out->dim(0)/2) + 1 != $in->dim(1),
+      # however this could mean that
+      #  $out->dim(0) = 2*$in->dim(1) - 2
+      # or
+      #  $out->dim(0) = 2*$in->dim(1) - 1
+      #
+      # WITHOUT ANY OTHER INFORMATION, I ASSUME EVEN INPUT SIZES, SO I ASSUME
+      #  $out->dim(0) = 2*$in->dim(1) - 2
+      if( ! $out->isnull )
+      {
+        @dims = $out->dims;
+      }
+      else
+      {
+        @dims = $in->dims;
+        shift @dims;
+
+        $dims[0] = $dims[0]*2 - 2;
+      }
     }
     splice @dims, $rank;
 
@@ -347,15 +369,13 @@ EOF
 
     my $do_inplace = is_same_data( $in, $out );
     my $planID = join('_',
-                      $rank,
+                      $thisfunction,
                       $do_double_precision,
-                      $is_real_fft,
-                      $do_inverse_fft,
                       $do_inplace,
                       @dims);
     if ( !exists $existingPlans{$planID} )
     {
-      $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $is_real_fft,
+      $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft,
                                               $do_inverse_fft, $in, $out );
       $_Nplans++;
     }

@@ -1,8 +1,8 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
 void *
-compute_plan( rank, do_double_precision, is_real_fft, do_inverse_fft, in, out )
-  int rank
+compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in, out )
+  SV*  dims_ref
   bool do_double_precision
   bool is_real_fft
   bool do_inverse_fft
@@ -13,31 +13,13 @@ CODE:
   // Given input and output matrices, this function computes the FFTW plan
 
   // PDL stores its data in the opposite dimension order from what FFTW wants. I
-  // handle this by passing in the dimension counts backwards. Furthermore, the
-  // dimension indices start at 1 because dim0 is the (real,imag) dimension that
-  // is implicit in FFTW.
+  // handle this by passing in the dimension counts backwards.
+  AV* dims_av = (AV*)SvRV(dims_ref);
+  int rank = av_len(dims_av) + 1;
+
   int dims_row_first[rank];
-  {
-    int idims_start;
-    pdl* dims_from_pdl;
-    if( !is_real_fft )
-    {
-      // complex FFTs skip the first dimension, since it's assumed to be 2 by
-      // FFTW
-      idims_start   = 1;
-      dims_from_pdl = in;
-    }
-    else
-    {
-      // real FFT. I use the real piddle, and look at all the dimensions
-      idims_start   = 0;
-      dims_from_pdl = do_inverse_fft ? out : in;
-    }
-
-    for( int i=0; i<rank; i++)
-      dims_row_first[i] = dims_from_pdl->dims[ rank - i - 1 + idims_start];
-  }
-
+  for( int i=0; i<rank; i++)
+    dims_row_first[i] = SvIV( *av_fetch( dims_av, rank-i-1, 0) );
 
   // TODO if out is null, I should make a plan with a different pointer, maybe
   void* plan;
