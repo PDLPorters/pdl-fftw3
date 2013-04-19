@@ -326,9 +326,21 @@ EOF
     # I get the plan ID, check if I already have a plan, and make a new plan if I
     # don't already have one
 
-    my $dims   = [$in->dims]; # dims is the dimensionality of the FFT.
-    shift @$dims;             # validateDimensions() made sure the dimensions are
-    splice @$dims, $rank;     # valid
+    my @dims; # the dimensionality of the FFT
+    if( !$is_real_fft )
+    {
+      @dims = $in->dims;
+      shift @dims;
+    }
+    elsif( !$do_inverse_fft )
+    {
+      @dims = $in->dims;
+    }
+    else
+    {
+      @dims = $out->dims;
+    }
+    splice @dims, $rank;
 
     my $do_double_precision = $in->get_datatype == $PDL_F ? 0 : 1;
     $_last_do_double_precision = $do_double_precision;
@@ -340,7 +352,7 @@ EOF
                       $is_real_fft,
                       $do_inverse_fft,
                       $do_inplace,
-                      @$dims);
+                      @dims);
     if ( !exists $existingPlans{$planID} )
     {
       $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $is_real_fft,
