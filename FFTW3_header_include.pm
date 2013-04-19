@@ -330,10 +330,6 @@ EOF
     shift @$dims;             # validateDimensions() made sure the dimensions are
     splice @$dims, $rank;     # valid
 
-    # TODO support nembed stuff here
-    my $in_dims_embed  = $dims;
-    my $out_dims_embed = $out->isnull ? $dims : $dims;
-
     my $do_double_precision = $in->get_datatype == $PDL_F ? 0 : 1;
     $_last_do_double_precision = $do_double_precision;
 
@@ -344,7 +340,7 @@ EOF
                       $is_real_fft,
                       $do_inverse_fft,
                       $do_inplace,
-                      @$dims, @$in_dims_embed, @$out_dims_embed);
+                      @$dims);
     if ( !exists $existingPlans{$planID} )
     {
       $existingPlans{$planID} = compute_plan( $rank, $do_double_precision, $is_real_fft,
