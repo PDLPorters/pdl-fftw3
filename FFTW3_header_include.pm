@@ -233,7 +233,7 @@ $thisfunction: mismatched first dimension:
 Giving up.
 EOF
 
-        for my $idim (1..$rank)
+        for my $idim (1..$rank-1)
         {
           if ( $in->dim($idim) != $out->dim($idim + 1) )
           {
@@ -257,7 +257,7 @@ $thisfunction: mismatched first dimension:
 Giving up.
 EOF
 
-        for my $idim (1..$rank)
+        for my $idim (1..$rank-1)
         {
           if ( $out->dim($idim) != $in->dim($idim + 1) )
           {
