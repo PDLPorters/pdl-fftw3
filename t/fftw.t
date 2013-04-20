@@ -22,7 +22,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 75;
+  plan tests => 148;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -177,6 +177,12 @@ my $Nplans = 0;
   eval( 'fft1( $x, $f2 )' );
   ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
                         "Should be able to ask for output in the arglist" );
+
+  eval( 'fft4( sequence(2,5,3,4,4) );' );
+  ok_should_make_plan( ! $@, "dimensionality baseline" );
+
+  eval( 'fft4( sequence(2,5,4,4) );' );
+  ok( $@, "too few dimensions should fail" );
 }
 
 # inplace checks
@@ -433,6 +439,232 @@ my $Nplans = 0;
       "float input/double output should do a double FFT" );
 }
 
+# real fft basic checks
+{
+  my $x6 = sequence(6)**2;
+  my $x7 = sequence(7)**2;
+
+  # octave refs parse with this:
+  # perl -ane '@F[2] =~ s/i//g; print "[$F[0],$F[1]$F[2]],\n";'
+
+  # octave reference: conj(fft( (0:5).**2 )') and conj(fft( (0:6).**2 )')
+  my $fx6_ref = pdl( [55.00000000000000,+0.00000000000000],
+                     [-6.00000000000000,+31.17691453623979],
+                     [-14.00000000000000,+10.39230484541326],
+                     [-15.00000000000000,+0.00000000000000],
+                     [-14.00000000000000,-10.39230484541326],
+                     [-6.00000000000000,-31.17691453623979] );
+
+  my $fx7_ref = pdl( [91.00000000000000,+0.00000000000000],
+                     [-5.90820611352046,+50.87477421602225],
+                     [-18.77412667908545,+19.53809802761889],
+                     [-20.81766720739410,+5.59196512255867],
+                     [-20.81766720739410,-5.59196512255867],
+                     [-18.77412667908545,-19.53809802761889],
+                     [-5.90820611352046,-50.87477421602225] );
+
+  my $fx6 = realfft1($x6);
+  ok_should_make_plan( all( approx( $fx6, $fx6_ref->slice(':,0:3'), approx_eps_double) ),
+                       "realfft basic test - forward - 6long" );
+  my $fx7 = realfft1($x7);
+  ok_should_make_plan( all( approx( $fx7, $fx7_ref->slice(':,0:3'), approx_eps_double) ),
+                       "realfft basic test - forward - 7long" );
+
+  my $x6_back = irealfft1($fx6_ref->slice(':,0:3'), zeros(6) );
+  ok_should_make_plan( all( approx( $x6, $x6_back / 6.0, approx_eps_double) ),
+                       "realfft basic test - backward - 6long - output in arglist" );
+
+  $x6_back = irealfft1($fx6_ref->slice(':,0:3'));
+  ok_should_reuse_plan( all( approx( $x6, $x6_back / 6.0, approx_eps_double) ),
+                        "realfft basic test - backward - 6long - output returned" );
+
+  my $x7_back = irealfft1($fx7_ref->slice(':,0:3'), zeros(7) );
+  ok_should_make_plan( all( approx( $x7, $x7_back / 7.0, approx_eps_double) ),
+                       "realfft basic test - backward - 7long" );
+}
+
+# real fft 2D checks
+{
+  my $x64 = sequence(6,4)**1.1;
+  my $x65 = sequence(6,5)**1.1;
+  my $x74 = sequence(7,4)**1.1;
+  my $x75 = sequence(7,5)**1.1;
+
+  my $x64_ref = pdl( [[360.467089670772225,+0.000000000000000],[-96.799893286902019,+103.123844918798000],[-99.028084766558067,+0.000000000000000],[-96.799893286902019,-103.123844918798000]],
+                     [[-15.988207248715064,+28.700459428988125],[0.351953528236895,-1.568072536701052],[0.894706789826859,-1.030374425555896],[1.617577583003193,-0.729750250118165]],
+                     [[-16.292902538160519,+9.547035210008918],[0.634591040891635,-0.785541150275863],[0.769581432672688,-0.358960145970985],[1.059338032001399,-0.013005581424496]],
+                     [[-16.334882296969155,+0.000000000000000],[0.826035615718165,-0.382043067657264],[0.750315495608504,+0.000000000000000],[0.826035615718165,+0.382043067657264]],
+                     [[-16.292902538160519,-9.547035210008918],[1.059338032001399,+0.013005581424496],[0.769581432672688,+0.358960145970985],[0.634591040891635,+0.785541150275863]],
+                     [[-15.988207248715064,-28.700459428988125],[1.617577583003193,+0.729750250118165],[0.894706789826859,+1.030374425555896],[0.351953528236895,+1.568072536701052]] )->xchg(1,2);
+
+  my $x65_ref = pdl( [[581.176580714253532,+0.000000000000000],[-121.955619356066137,+180.656218696101774],[-126.233159544554283,+42.418129358506746],[-126.233159544554283,-42.418129358506746],[-121.955619356066137,-180.656218696101774]],
+                     [[-20.541598254340641,+36.647109644693884],[0.166836245337382,-1.944952627138933],[0.717118890606079,-1.295587872699933],[1.204146586049559,-0.971137876719541],[2.048534847787472,-0.720103497369214]],
+                     [[-20.868969490707826,+12.195700173607197],[0.644275726642125,-1.030653760454608],[0.749750248828911,-0.542566364608868],[0.913334629089297,-0.244339532151135],[1.274868845404011,+0.108769899029373]],
+                     [[-20.913788738508799,+0.000000000000000],[0.937317766511587,-0.564249965530514],[0.811766871540105,-0.147421276996557],[0.811766871540105,+0.147421276996557],[0.937317766511587,+0.564249965530514]],
+                     [[-20.868969490707826,-12.195700173607197],[1.274868845404011,-0.108769899029373],[0.913334629089297,+0.244339532151135],[0.749750248828911,+0.542566364608868],[0.644275726642125,+1.030653760454608]],
+                     [[-20.541598254340641,-36.647109644693884],[2.048534847787472,+0.720103497369214],[1.204146586049559,+0.971137876719541],[0.717118890606079,+1.295587872699933],[0.166836245337382,+1.944952627138933]] )->xchg(1,2);
+
+  my $x74_ref = pdl( [[501.493394074383787,+0.000000000000000],[-133.959755823278442,+142.617956550047921],[-137.025115324985222,+0.000000000000000],[-133.959755823278442,-142.617956550047921]],
+                     [[-18.865669184773111,+40.763000085858437],[0.303558154663907,-2.139893880507619],[1.092794692703986,-1.466640717037794],[2.101733986260737,-1.130389132503664]],
+                     [[-19.293372490503472,+15.621007669166248],[0.660940909046470,-1.114601274898615],[0.916525999732684,-0.589874650055651],[1.356292422245748,-0.197237286031954]],
+                     [[-19.369109179404475,+4.468560279899923],[0.870724656176023,-0.640911587295642],[0.881225310656959,-0.170789696788245],[1.069971171773709,+0.261394699800439]],
+                     [[-19.369109179404475,-4.468560279899923],[1.069971171773709,-0.261394699800439],[0.881225310656959,+0.170789696788245],[0.870724656176023,+0.640911587295642]],
+                     [[-19.293372490503472,-15.621007669166248],[1.356292422245748,+0.197237286031954],[0.916525999732684,+0.589874650055651],[0.660940909046470,+1.114601274898615]],
+                     [[-18.865669184773111,-40.763000085858437],[2.101733986260737,+1.130389132503664],[1.092794692703986,+1.466640717037794],[0.303558154663907,+2.139893880507619]] )->xchg(1,2);
+
+  my $x75_ref = pdl( [[807.475069006401100,+0.000000000000000],[-168.753063158798682,+249.823189325119387],[-174.641491905125804,+58.661407474458414],[-174.641491905125804,-58.661407474458414],[-168.753063158798682,-249.823189325119387]],
+                     [[-24.254907872104781,+52.050559234805071],[0.014162346363465,-2.632174401873477],[0.825892556600018,-1.808402549148552],[1.517875094286842,-1.417505033220904],[2.687499935923872,-1.159881805800431]],
+                     [[-24.714356335554129,+19.955552964153426],[0.626228017088200,-1.433208444983354],[0.856153542379253,-0.823419842535374],[1.123969929564233,-0.469253829892776],[1.658488397174277,-0.080552774016870]],
+                     [[-24.795144499563577,+5.709126404576390],[0.953872055406139,-0.885288945105194],[0.915476598274172,-0.361029355303055],[0.992228878787710,-0.012896599792635],[1.249581916098234,+0.447905615145083]],
+                     [[-24.795144499563577,-5.709126404576390],[1.249581916098234,-0.447905615145083],[0.992228878787710,+0.012896599792635],[0.915476598274172,+0.361029355303055],[0.953872055406139,+0.885288945105194]],
+                     [[-24.714356335554129,-19.955552964153426],[1.658488397174277,+0.080552774016870],[1.123969929564233,+0.469253829892776],[0.856153542379253,+0.823419842535374],[0.626228017088200,+1.433208444983354]],
+                     [[-24.254907872104781,-52.050559234805071],[2.687499935923872,+1.159881805800431],[1.517875094286842,+1.417505033220904],[0.825892556600018,+1.808402549148552],[0.014162346363465,+2.632174401873477]] )->xchg(1,2);
+
+
+  # forward
+  my $fx64 = realfft2($x64);
+  ok_should_make_plan( all( approx( $fx64, $x64_ref->slice(':,0:3,:'), approx_eps_double) ),
+                       "realfft 2d test - forward - 6,4" );
+
+  my $fx65 = realfft2($x65);
+  ok_should_make_plan( all( approx( $fx65, $x65_ref->slice(':,0:3,:'), approx_eps_double) ),
+                       "realfft 2d test - forward - 6,5" );
+
+  my $fx74 = realfft2($x74);
+  ok_should_make_plan( all( approx( $fx74, $x74_ref->slice(':,0:3,:'), approx_eps_double) ),
+                       "realfft 2d test - forward - 7,4" );
+
+  my $fx75 = realfft2($x75);
+  ok_should_make_plan( all( approx( $fx75, $x75_ref->slice(':,0:3,:'), approx_eps_double) ),
+                       "realfft 2d test - forward - 7,5" );
+
+
+
+  # backward
+  my $x64_back = irealfft2($x64_ref->slice(':,0:3,:') );
+  ok_should_make_plan( all( approx( $x64, $x64_back / (6.0 * 4.0), approx_eps_double) ),
+                       "realfft 2d test - backward - 6,4 - output returned" );
+
+  $x64_back = zeros(6,4);
+  irealfft2($x64_ref->slice(':,0:3,:'), $x64_back );
+  ok_should_reuse_plan( all( approx( $x64, $x64_back / (6.0 * 4.0), approx_eps_double) ),
+                        "realfft 2d test - backward - 6,4 - output in arglist" );
+
+  my $x65_back = irealfft2($x65_ref->slice(':,0:3,:') );
+  ok_should_make_plan( all( approx( $x65, $x65_back / (6.0 * 5.0), approx_eps_double) ),
+                       "realfft 2d test - backward - 6,5 - output returned" );
+
+  $x65_back = zeros(6,5);
+  irealfft2($x65_ref->slice(':,0:3,:'), $x65_back );
+  ok_should_reuse_plan( all( approx( $x65, $x65_back / (6.0 * 5.0), approx_eps_double) ),
+                        "realfft 2d test - backward - 6,5 - output in arglist" );
+
+  my $x74_back = irealfft2($x74_ref->slice(':,0:3,:'), zeros(7,4) );
+  ok_should_make_plan( all( approx( $x74, $x74_back / (7.0 * 4.0), approx_eps_double) ),
+                       "realfft 2d test - backward - 7,4" );
+
+  my $x75_back = irealfft2($x75_ref->slice(':,0:3,:'), zeros(7,5) );
+  ok_should_make_plan( all( approx( $x75, $x75_back / (7.0 * 5.0), approx_eps_double) ),
+                       "realfft 2d test - backward - 7,5" );
+}
+
+# real fft sanity checks
+{
+  {
+    eval 'realfft1( sequence(6) );';
+    ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline forward" );
+    eval 'realfft1( inplace sequence(6) );';
+    ok( $@, "real ffts shouldn't work inplace - forward" );
+  }
+
+  {
+    eval 'irealfft1( sequence(2,4) );';
+    ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline backward" );
+    eval 'irealfft1( inplace sequence(2,4) );';
+    ok( $@, "real ffts shouldn't work inplace - backward" );
+  }
+
+  {
+    eval 'realfft1( sequence(7), sequence(2,4) );';
+    ok_should_reuse_plan( ! $@, "real fft dims - baseline");
+
+    eval 'realfft1( sequence(7), sequence(3,4) );';
+    ok( $@, "real fft dimensionality 1");
+
+    eval 'realfft1( sequence(7), sequence(1,4) );';
+    ok( $@, "real fft dimensionality 2");
+
+    eval 'realfft1( sequence(7), sequence(2,5) );';
+    ok( $@, "real fft dimensionality 3");
+
+    eval 'realfft1( sequence(7), sequence(2,3) );';
+    ok( $@, "real fft dimensionality 4");
+  }
+
+  {
+    eval( 'realfft4( sequence(5,3,4,4) );' );
+    ok_should_make_plan( ! $@, "real dimensionality baseline" );
+
+    eval( 'realfft4( sequence(5,4,4) );' );
+    ok( $@, "real dimensionality: too few dimensions should fail" );
+
+    eval( 'irealfft4( sequence(2,5,3,4,4) );' );
+    ok_should_make_plan( ! $@, "real-backward dimensionality baseline" );
+
+    eval( 'irealfft4( sequence(5,4,4) );' );
+    ok( $@, "real-backward dimensionality: too few dimensions should fail" );
+  }
+
+  {
+    eval( 'realfft4( sequence(5,3,4,4), sequence(2,3,3,4,4) );' );
+    ok_should_reuse_plan( ! $@, "real dimensionality baseline - more explicit" );
+
+    eval( 'realfft4( sequence(5,3,4,4), sequence(2,3,3,4,4,3) );' );
+    ok_should_reuse_plan( ! $@, "real dimensionality baseline - extra dims should be ok" );
+
+    eval( 'realfft4( sequence(5,3,4,4), sequence(3,3,3,4,3) );' );
+    ok( $@, "real dimensionality - output should look like complex numbers" );
+
+    eval( 'realfft4( sequence(5,3,4,4), sequence(2,3,3,4,3) );' );
+    ok( $@, "real dimensionality - different dims should break 1" );
+
+    eval( 'realfft4( sequence(5,3,4,4), sequence(2,3,3,4,5) );' );
+    ok( $@, "real dimensionality - different dims should break 2" );
+
+    eval( 'realfft4( sequence(4,3,4,4), sequence(2,3,3,4,4) );' );
+    ok_should_make_plan( !$@, "real dimensionality - slightly different complex dims still ok" );
+
+    eval( 'realfft4( sequence(6,3,4,4), sequence(2,3,3,4,4) );' );
+    ok( $@, "real dimensionality - too different complex dims should break" );
+  }
+
+  {
+    eval( 'irealfft4( sequence(2,3,3,4,4) );' );
+    ok_should_make_plan( ! $@, "real-backward dimensionality baseline 1" );
+
+    eval( 'irealfft4( sequence(2,3,3,4,4), sequence(5,3,4,4) );' );
+    ok_should_make_plan( ! $@, "real-backward dimensionality baseline 2" );
+
+    eval( 'irealfft4( sequence(2,3,3,4,4,3), sequence(5,3,4,4) );' );
+    ok_should_reuse_plan( ! $@, "real-backward dimensionality baseline - extra dims should be ok" );
+
+    eval( 'irealfft4( sequence(3,3,3,4,4,3), sequence(5,3,4,4) );' );
+    ok( $@, "real-backward dimensionality - input should look like complex numbers" );
+
+    eval( 'irealfft4( sequence(2,3,3,4,3), sequence(5,3,4,4) );' );
+    ok( $@, "real-backward dimensionality - different dims should break 1" );
+
+    eval( 'irealfft4( sequence(2,3,3,4,5), sequence(5,3,4,4) );' );
+    ok( $@, "real-backward dimensionality - different dims should break 2" );
+
+    eval( 'irealfft4( sequence(2,3,3,4,4), sequence(4,3,4,4) );' );
+    ok_should_reuse_plan( !$@, "real-backward dimensionality - slightly different complex dims still ok" );
+
+    eval( 'irealfft4( sequence(2,3,3,4,4), sequence(6,3,4,4) );' );
+    ok( $@, "real-backward dimensionality - too different complex dims should break" );
+  }
+}
+
 
 
 
@@ -444,20 +676,28 @@ sub ok_should_make_plan
 {
   my ($value, $planname) = @_;
   ok( $value, $planname );
-
-  ok( $PDL::FFTW3::_Nplans == $Nplans+1,
-      "$planname: should make a new plan" );
-
-  $Nplans = $PDL::FFTW3::_Nplans;
+  check_new_plan( $planname );
 }
 
 sub ok_should_reuse_plan
 {
   my ($value, $planname) = @_;
   ok( $value, $planname );
+  check_reused_plan( $planname );
+}
 
+sub check_new_plan
+{
+  my $planname = shift;
+  ok( $PDL::FFTW3::_Nplans == $Nplans+1,
+      "$planname: should make a new plan" );
+  $Nplans = $PDL::FFTW3::_Nplans;
+}
+
+sub check_reused_plan
+{
+  my $planname = shift;
   ok( $PDL::FFTW3::_Nplans == $Nplans,
       "$planname: should reuse an existing plan" );
-
   $Nplans = $PDL::FFTW3::_Nplans;
 }
