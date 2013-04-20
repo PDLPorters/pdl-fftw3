@@ -93,7 +93,7 @@ CODE:
   if( plan == NULL )
     XSRETURN_UNDEF;
   else
-    RETVAL = PTR2IV(plan);
+    RETVAL = (void*)PTR2IV(plan);
 }
 OUTPUT:
  RETVAL
