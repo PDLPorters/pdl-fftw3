@@ -3,6 +3,7 @@
 // following strings are replaced:
 //
 // INVERSE      If this is a c2r transform rather than r2c
+// RANK         The rank of this transform
 
 #ifndef __TEMPLATE_ALREADY_INCLUDED__
 
@@ -24,7 +25,19 @@
                                        ($TFD(float,double)*)$P(real),
                                        ($TFD(fftwf_,fftw_)complex*)$P(complex) );
   else
+  {
+    // FFTW inverse real transforms clobber their input. I thus make a new
+    // buffer and transform from there
+    unsigned long nelem = 1;
+    for( int i=0; i<=RANK; i++ )
+      nelem *= $PDL(complex)->dims[i];
+    $GENERIC()* input_copy = $TFD(fftwf_,fftw_)alloc_real( nelem );
+    memcpy( input_copy, $P(complex), sizeof($GENERIC()) * nelem );
+
     $TFD(fftwf_,fftw_)execute_dft_c2r( plan,
-                                       ($TFD(fftwf_,fftw_)complex*)$P(complex),
+                                       ($TFD(fftwf_,fftw_)complex*)input_copy,
                                        ($TFD(float,double)*)$P(real) );
+
+    $TFD(fftwf_,fftw_)free( input_copy );
+  }
 }

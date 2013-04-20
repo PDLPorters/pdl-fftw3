@@ -103,9 +103,10 @@ sub generateDefinitions
   my $dims_real_string    = join(',', @dims_real);
   my $dims_complex_string = join(',', @dims_complex);
 
-  my $code_real          = `cat template_real.c`;
-  my $code_real_forward  = $code_real;
-  my $code_real_backward = $code_real;
+  my $code_real          =  `cat template_real.c`;
+  $code_real             =~ s/RANK/$rank/ge;
+  my $code_real_forward  =  $code_real;
+  my $code_real_backward =  $code_real;
 
   $code_real_forward  =~ s/INVERSE/0/g;
   $code_real_backward =~ s/INVERSE/1/g;
