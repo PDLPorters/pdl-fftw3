@@ -22,7 +22,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 148;
+  plan tests => 156;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -665,6 +665,34 @@ my $Nplans = 0;
   }
 }
 
+# make sure the routines do not damage their input
+{
+  # I use all-new size to make sure a planning phase takes place. This checks
+  # the planning phase for preserving its input also
+  my $xorig = sequence(6,7,8);
+  my $Xorig = sequence(2,6,7,8);
+  my ($x,$X);
+
+  $X = $Xorig->copy;
+  fft2($X);
+  ok_should_make_plan( all( approx( $X, $Xorig, approx_eps_double) ),
+                       "2D forward FFT preserves its input" );
+
+  $X = $Xorig->copy;
+  ifft2($X);
+  ok_should_make_plan( all( approx( $X, $Xorig, approx_eps_double) ),
+                       "2D backward FFT preserves its input" );
+
+  $x = $xorig->copy;
+  realfft3($x);
+  ok_should_make_plan( all( approx( $x, $xorig, approx_eps_double) ),
+                       "3D real forward FFT preserves its input" );
+
+  $X = $Xorig->copy;
+  irealfft3($X);
+  ok_should_make_plan( all( approx( $X, $Xorig, approx_eps_double) ),
+                       "3D real backward FFT preserves its input" );
+}
 
 
 
