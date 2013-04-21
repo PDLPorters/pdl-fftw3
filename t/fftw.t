@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use PDL;
+use PDL::Types;
 
 # Please be careful about rearranging these tests, since they depend on the
 # global FFTW plan cache, and thus order can matter.
@@ -22,7 +23,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 156;
+  plan tests => 158;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -393,6 +394,8 @@ my $Nplans = 0;
                   [148.8841768587627,-13.0277379108784] );
 
   my $f = null;
+  my $F;
+
   fft1($x, $f);
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
                         "Type-checking baseline" );
@@ -400,18 +403,22 @@ my $Nplans = 0;
       "Unspecified FFTs should be double-precision" );
 
   $f = null;
-  fft1($x->float, $f);
+  $F = fft1($x->float, $f);
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
                         "Float input/Unspecified output baseline" );
   ok( ! $PDL::FFTW3::_last_do_double_precision,
       "Float input/Unspecified output should do a float FFT" );
+  ok( $F->type == float,
+      "Float input/Unspecified output should return a float" );
 
   $f = null;
-  fft1($x->byte, $f);
+  $F = fft1($x->byte, $f);
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
                         "Byte input/Unspecified output baseline" );
   ok( ! $PDL::FFTW3::_last_do_double_precision,
       "Byte input/Unspecified output should do a float FFT" );
+  ok( $F->type == float,
+      "Byte input/Unspecified output should return a float" );
 
   $f = $x->zeros;
   fft1($x, $f);
