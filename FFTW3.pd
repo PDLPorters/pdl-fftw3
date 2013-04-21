@@ -10,6 +10,8 @@
 # I generate code for up to 10-dimensional FFTs
 my $maxrank = 10;
 
+our $VERSION = '0.01';
+
 pp_addhdr( '
 #include <fftw3.h>
 ' );
