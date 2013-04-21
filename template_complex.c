@@ -1,4 +1,5 @@
 // This is the template used by PP to generate the FFTW routines.
+// FFTW3.pd includes this file
 
 #ifndef __TEMPLATE_ALREADY_INCLUDED__
 

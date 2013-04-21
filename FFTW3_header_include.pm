@@ -1,3 +1,6 @@
+# This file is included by FFTW3.pd
+
+
 use PDL::Types;
 
 # when I compute an FFTW plan, it goes here

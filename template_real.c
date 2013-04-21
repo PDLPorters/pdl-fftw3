@@ -1,6 +1,8 @@
-// This is the template used by PP to generate the FFTW routines. This is passed
-// into pp_def() in the 'Code' key. Before this file is passed to pp_def, the
-// following strings are replaced:
+// This is the template used by PP to generate the FFTW routines.
+// FFTW3.pd includes this file
+
+// This is passed into pp_def() in the 'Code' key. Before this file is passed to
+// pp_def, the following strings are replaced:
 //
 // INVERSE      If this is a c2r transform rather than r2c
 // RANK         The rank of this transform
