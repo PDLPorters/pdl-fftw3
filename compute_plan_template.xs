@@ -21,9 +21,15 @@ CODE:
   for( int i=0; i<rank; i++)
     dims_row_first[i] = SvIV( *av_fetch( dims_av, rank-i-1, 0) );
 
-  // TODO if out is null, I should make a plan with a different pointer, maybe
-  void* plan;
+  // if out is null, I do a dummy alloc of memory so I can pass the pointer to
+  // the planner
+  void* out_data = out->data;
+  if(out->state & PDL_NOMYDIMS)
+    out_data = do_double_precision ?
+      (void*) fftw_alloc_complex(16) :
+      (void*)fftwf_alloc_complex(16);
 
+  void* plan;
   if( !is_real_fft )
   {
     int direction = do_inverse_fft ? FFTW_BACKWARD : FFTW_FORWARD;
@@ -32,12 +38,12 @@ CODE:
     if( !do_double_precision )
       plan =
         fftwf_plan_dft( rank, dims_row_first,
-                        (fftwf_complex*)in->data, (fftwf_complex*)out->data,
+                        (fftwf_complex*)in->data, (fftwf_complex*)out_data,
                         direction, FFTW_ESTIMATE);
     else
       plan =
         fftw_plan_dft( rank, dims_row_first,
-                       (fftw_complex*)in->data, (fftw_complex*)out->data,
+                       (fftw_complex*)in->data, (fftw_complex*)out_data,
                        direction, FFTW_ESTIMATE);
   }
   else
@@ -48,12 +54,12 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftwf_plan_dft_r2c( rank, dims_row_first,
-                              (float*)in->data, (fftwf_complex*)out->data,
+                              (float*)in->data, (fftwf_complex*)out_data,
                               FFTW_ESTIMATE );
       else
         plan =
           fftwf_plan_dft_c2r( rank, dims_row_first,
-                              (fftwf_complex*)in->data, (float*)out->data,
+                              (fftwf_complex*)in->data, (float*)out_data,
                               FFTW_ESTIMATE );
     }
     else
@@ -61,14 +67,21 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftw_plan_dft_r2c( rank, dims_row_first,
-                             (double*)in->data, (fftw_complex*)out->data,
+                             (double*)in->data, (fftw_complex*)out_data,
                              FFTW_ESTIMATE );
       else
         plan =
           fftw_plan_dft_c2r( rank, dims_row_first,
-                             (fftw_complex*)in->data, (double*)out->data,
+                             (fftw_complex*)in->data, (double*)out_data,
                              FFTW_ESTIMATE );
     }
+  }
+
+  // out was null; free the dummy pointer
+  if(out->state & PDL_NOMYDIMS)
+  {
+    if(do_double_precision) fftw_free (out_data);
+    else                    fftwf_free(out_data);
   }
 
 
