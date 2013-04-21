@@ -1,0 +1,222 @@
+=head1 NAME
+
+PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
+
+=head1 DESCRIPTION
+
+This is a PDL binding to version 3 of the FFTW library. Supported are complex
+<-> complex and real <-> complex FFTs.
+
+=head1 SYNOPSIS
+
+ use PDL;
+ use PDL::FFTW3;
+ use PDL::Graphics::Gnuplot;
+ use PDL::Complex;
+
+ # Basic functionality
+ my $x = sin( sequence(100) * 2.0 ) + 2.0 * cos( sequence(100) / 3.0 );
+ my $F = realfft1( $x );
+ gplot( with => 'lines', inner($F,$F));
+
+ =====>
+
+  8000 ++------------+-------------+------------+-------------+------------++
+       +             +             +            +             +             +
+       |                                                                    |
+       |      *                                                             |
+  7000 ++     *                                                            ++
+       |      *                                                             |
+       |      *                                                             |
+       |      *                                                             |
+       |      *                                                             |
+  6000 ++     *                                                            ++
+       |      *                                                             |
+       |      *                                                             |
+       |      *                                                             |
+  5000 ++     *                                                            ++
+       |      *                                                             |
+       |      *                                                             |
+       |      **                                                            |
+  4000 ++     **                                                           ++
+       |      **                                                            |
+       |     * *                                                            |
+       |     * *                                                            |
+       |     * *                                                            |
+  3000 ++    * *                                                           ++
+       |     * *                                                            |
+       |     * *                                                            |
+       |     * *                                   *                        |
+  2000 ++    * *                                   *                       ++
+       |     * *                                   *                        |
+       |     * *                                   **                       |
+       |     * *                                   **                       |
+       |     * *                                   **                       |
+  1000 ++    *  *                                 * *                      ++
+       |     *  *                                 * *                       |
+       |    **   *                                *  *                      |
+       +   *     *   +             +            + *  *        +             +
+     0 ****-------*********************************--************************
+       0             10            20           30            40            50
+
+
+
+ # Correlation of two real signals
+
+ # two signals offset by 30 units
+ my $x    = sequence(100);
+ my $y1   = exp( 0.2*($x - 20.5) ** (-2.0) );
+ my $y2   = exp( 0.2*($x - 50.5) ** (-2.0) );
+
+ # compute the correlation
+ my $F12  = realfft1( cat($y1,$y2) );
+ my $corr = irealfft1( Cmul(      $F12(:,:,(1)),
+                            Cconj $F12(:,:,(0)) ) );
+ # and find the peak
+ say maximum_ind($corr);
+
+ =====> 30
+
+=head1 DESCRIPTION
+
+=head2 Supported operations
+
+This module computes the Discrete Fourier Transform. In its most basic form,
+this transform converts a vector of complex numbers in the time domain into
+another vector of complex numbers in the frequency domain. These complex <->
+complex transforms are supported with C<fftN> functions for a rank-C<N>
+transform. The opposite effect (transform data in the frequency domain back to
+the time domain) can be achieved with the C<ifftN> functions.
+
+A common use case is to transform purely-real data. This data has 0 for its
+complex component, and FFTW can take advantage of this to compute the FFT faster
+and using less memory. Since a Fourier Transform of a real signal has an even
+real part and an odd imaginary part, only 1/2 of the spectrum is needed. These
+forward real -> complex transforms are supported with the C<realfftN> functions.
+The backward version of this transform is complex -> real and is supported with
+the C<irealfftN> functions.
+
+=head2 Basic usage details
+
+Arbitrary C<N>-dimensional transforms are supported. All functions exported by
+this module have the C<N> in their name, so for instance a complex <-> complex
+3D forward transform is computed with the C<fft3> function. The rank I<must
+always> be specified in this way; there is no function called simply C<fft>.
+
+In-place operation is supported for complex <-> complex functions, but not the
+real ones (real function don't have mathing dimensionality of the input and
+output). An in-place transform of C<$x> can be computed with
+
+ fft1( $x->inplace );
+
+All the functions in this module support PDL threading. For instance, if we have
+4 different image piddles C<$a>, C<$b>, C<$c>, C<$d> and we want to compute
+their 2D FFTs at the same time, we can say
+
+ my $ABCD_transformed = realfft2( PDL::cat( $a, $b, $c, $d) );
+
+This takes advantage of PDL's automatic parallelization, if appropriate (See
+L<PDL::ParallelCPU>).
+
+=head2 Data formats
+
+FFTW supports single and double-precision floating point numbers directly. If
+possible, the PDL input will be used as-is. If not, a type conversion will be
+made to use the lowest-common type. So as an example, the following will perform
+a single-precision floating point transform (and return data of that type).
+
+ fft1( $x->byte )
+
+This module expects complex numbers to be stored as a (real,imag) pair in the
+first dimension of a piddle. Thus in a complex piddle C<$x>, it is expected that
+C<$x-E<gt>dim(0) == 2> (this module verifies this before proceeding).
+
+Generally, the sizes of the input and the output must match. This is completely
+true for the complex <-> complex transforms: the output will have the same size
+and the input, and an error will result if this isn't possible for some reason.
+
+This is a little bit more involved for the real <-> complex transforms. If I'm
+transforming a real 3D vector of dimensions C<K,L,M>, I will get an output of
+dimensions C<2,int(K/2)+1,L,M>. The leading 2 is there because the output is
+complex; the C<K/2> is there because the input was real. The first dimension is
+always the one that gets the C<K/2>. This is described in detail in section 2.4
+of the FFTW manual.
+
+Note that given a real input, the dimensionality of the complex transformed
+output is unambiguous. However, this is I<not> true for the backward transform.
+For instance, a 1D inverse transform of a vector of 10 complex numbers can
+produce real output of either 18 or 19 elements (because C<int(18/2)+1 == 10>
+and C<int(19/2)+1 == 10>).
+
+I<Without any extra information this module assumes the even-sized input>.
+
+Thus C<irealfft1( sequence(2,10) )-E<gt>dim(0) == 18> is true. If we want the odd-sized output, we have to explicitly pass this into the function like this:
+
+ irealfft1( sequence(2,10), zeros(19) )
+
+Here I create a new output piddle with the C<zeros> function; C<irealfft1> then
+fills in this piddle with the result of the computation. This module validates
+all of its input, so only 18 and 19 are valid here. An error will be thrown if
+you try to pass in C<zeros(20)>.
+
+This all means that the following will produce surprising results if
+C<$x-E<gt>dim(0)> isn't even
+
+ irealfft1( realfft1( $x ) )
+
+=head2 FFT details
+
+Note that this module computes unnormalized FFTs. This means that
+
+ ifft1( fft1( $x ) )
+
+will not be equal to C<$x>, but rather to C<$x> scaled up by C<N>, the number of
+elements in C<$x>.
+
+=head1 FUNCTIONS
+
+=head2 fftN (fft1, fft2, fft3, ...)
+
+The basic complex <-> complex FFT. Function names all contain C<N>, the rank of
+this transform. These functions all take one input piddle and one output piddle.
+The dimensions of the input and the output are identical. The output can be
+passed in as the 2nd argument, if desired. If the output piddle is passed in,
+the user I<must> make sure the dimensions match. The following are equivalent:
+
+ $X = fft1( $x );
+ fft1( $x, my $X = $x->zeros );
+
+=head2 ifftN (ifft1, ifft2, ifft3, ...)
+
+The basic complex <-> complex backward FFT. Everything is exactly like in the
+C<fftN> functions, except the inverse transform is computed.
+
+=head2 realfftN (realfft1, realfft2, realfft3, ...)
+
+The real -> complex FFT. Function names all contain C<N>, the rank of this
+transform. These functions all take one input piddle and one output piddle. The
+dimensions of the input and the output are not identical, but are related as
+described in L<Data formats>. The output can be passed in as the 2nd argument,
+if desired. If the output piddle is passed in, the user I<must> make sure the
+dimensions match.
+
+=head2 irealfftN (irealfft1, irealfft2, irealfft3, ...)
+
+The complex -> real inverse FFT. Function names all contain C<N>, the rank of
+this transform. Argument passing and interpretation is as described in
+C<realfftN>. Please read L<Data formats> for details about dimension
+interpretation. There's an ambiguity about the output dimensionality, which is
+described in that section.
+
+=head1 AUTHOR
+
+Dima Kogan, C<< <dima@secretsauce.net> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2013 Dima Kogan.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License.
+
+=cut

@@ -12,6 +12,8 @@ my $maxrank = 10;
 
 our $VERSION = '0.01';
 
+pp_addpm( {At => 'Top'}, scalar `cat README.pod` );
+
 pp_addhdr( '
 #include <fftw3.h>
 ' );
