@@ -30,23 +30,15 @@ CODE:
 
     // complex-complex FFT. Input/output have identical dimensions
     if( !do_double_precision )
-    {
-      // TODO check for the overwriting of the input when I do something fancier
-      // than FFTW_ESTIMATE
       plan =
         fftwf_plan_dft( rank, dims_row_first,
                         (fftwf_complex*)in->data, (fftwf_complex*)out->data,
                         direction, FFTW_ESTIMATE);
-    }
     else
-    {
-      // TODO check for the overwriting of the input when I do something fancier
-      // than FFTW_ESTIMATE
       plan =
         fftw_plan_dft( rank, dims_row_first,
                        (fftw_complex*)in->data, (fftw_complex*)out->data,
                        direction, FFTW_ESTIMATE);
-    }
   }
   else
   {
@@ -54,38 +46,28 @@ CODE:
     if( !do_double_precision)
     {
       if( !do_inverse_fft )
-      {
         plan =
           fftwf_plan_dft_r2c( rank, dims_row_first,
                               (float*)in->data, (fftwf_complex*)out->data,
                               FFTW_ESTIMATE );
-      }
       else
-      {
         plan =
           fftwf_plan_dft_c2r( rank, dims_row_first,
                               (fftwf_complex*)in->data, (float*)out->data,
                               FFTW_ESTIMATE );
-        // TODO check for the overwriting of the input when I do something fancier
-      }
     }
     else
     {
       if( !do_inverse_fft )
-      {
         plan =
           fftw_plan_dft_r2c( rank, dims_row_first,
                              (double*)in->data, (fftw_complex*)out->data,
                              FFTW_ESTIMATE );
-      }
       else
-      {
         plan =
           fftw_plan_dft_c2r( rank, dims_row_first,
                              (fftw_complex*)in->data, (double*)out->data,
                              FFTW_ESTIMATE );
-        // TODO check for the overwriting of the input when I do something fancier
-      }
     }
   }
 

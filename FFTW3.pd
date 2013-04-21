@@ -17,11 +17,8 @@ pp_addhdr( '
 ' );
 
 
-# available functions:
-# fft{inplace,not}{inverse,forward}{real,complex}
-#
-# I want to be able to say $X = fft1($x); rank is required. fft() is ambiguous
-# about whether threading is desired or ir a large fft is desired. Old PDL::FFTW
+# I want to be able to say $X = fft1($x); rank is required. 'fft()' is ambiguous
+# about whether threading is desired or if a large fft is desired. Old PDL::FFTW
 # did one thing, matlab does another, so I do not include this function at all
 
 
@@ -74,8 +71,6 @@ sub generateDefinitions
   my @dims = map {"n$_"} 1..$rank;
   unshift @dims, 'n0=2';
   my $dims_string = join(',', @dims);
-
-# TODO worry about alignment
 
   my $code =  `cat template_complex.c`;
 
