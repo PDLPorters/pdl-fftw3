@@ -35,7 +35,7 @@ for my $rank (1..$maxrank)
 pp_export_nothing();
 
 pp_addxs('', `cat compute_plan_template.xs`);
-pp_addpm( {At => 'Top'}, scalar `cat FFTW3_header_include.pm` );
+pp_addpm( {At => 'Middle'}, scalar `cat FFTW3_header_include.pm` );
 
 
 for my $rank (1..$maxrank)
