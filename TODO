@@ -1,0 +1,5 @@
+-*- org -*-
+
+- check on alignment issues. plain PDL alloc seems ok...
+- can embedding be made to work?
+- Do something smarter than FFTW_ESTIMATE
