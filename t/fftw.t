@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use PDL;
+use PDL::LiteF;
 use PDL::Types;
 
 # Please be careful about rearranging these tests, since they depend on the
