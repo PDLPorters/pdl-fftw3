@@ -13,7 +13,7 @@ our $_last_do_double_precision;
 # This file is included verbatim into the final module via pp_addpm()
 
 # This is a function that sits between the user's call into this module and the
-# PP-generated internals. Specifically, this function is called BEFORE and PDL
+# PP-generated internals. Specifically, this function is called BEFORE any PDL
 # threading happens. Here I make sure the FFTW plan exists, or if it doesn't, I
 # make it. Thus the PP-based internals can safely assume that the plan exists
 sub __fft_internal
