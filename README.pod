@@ -164,14 +164,21 @@ C<$x-E<gt>dim(0)> isn't even
 
  irfft1( rfft1( $x ) )
 
-=head2 FFT details
+=head2 FFT normalization
 
-Note that this module computes unnormalized FFTs. This means that
+Following the widest-used convention for discrete Fourier transforms,
+this module normalizes the inverse transform (but not the forward
+transform) by dividing by the number of elements in the data set, so
+that
 
  ifft1( fft1( $x ) )
 
-will not be equal to C<$x>, but rather to C<$x> scaled up by C<N>, the number of
-elements in C<$x>.
+is a slow approximate no-op, if C<$x> is well-behaved.  
+
+This is different from the behavior of the underlying FFTW3 library itself,
+but more consistent with other FFT packages for popular analysis languages
+including PDL.
+
 
 =head1 FUNCTIONS
 
@@ -188,8 +195,13 @@ the user I<must> make sure the dimensions match. The following are equivalent:
 
 =head2 ifftN (ifft1, ifft2, ifft3, ...)
 
-The basic complex <-> complex backward FFT. Everything is exactly like in the
-C<fftN> functions, except the inverse transform is computed.
+The basic, properly normalized, complex <-> complex backward
+FFT. Everything is exactly like in the C<fftN> functions, except the
+inverse transform is computed and normalized, so that (for example)
+
+ ifft1( fft1 ( $x ) )
+
+is a good approximation of C<$x> itself.
 
 =head2 rfftN (rfft1, rfft2, rfft3, ...)
 

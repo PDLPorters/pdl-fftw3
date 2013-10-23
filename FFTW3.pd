@@ -40,17 +40,21 @@ pp_addpm( {At => 'Middle'}, scalar `cat FFTW3_header_include.pm` );
 
 for my $rank (1..$maxrank)
 {
+  my $shapestr,$rshapestr;
+  $shapestr =  sprintf(q{$a->shape->slice('1:%d')->prodover},$rank);
+  $rshapestr = sprintf(q{$a->shape->slice('0:%d')->prodover},$rank-1);
+
   pp_addpm({At => 'Bot'}, <<EOF );
 sub fft$rank { __fft_internal( "fft$rank",\@_ ); }
 eval( "*PDL::fft$rank = \&fft$rank;" );
 
-sub ifft$rank { __fft_internal( "ifft$rank", \@_ ); }
+sub ifft$rank { my \$a = __fft_internal( "ifft$rank", \@_ ); \$a /= $shapestr; \$a; }
 eval( "*PDL::ifft$rank = \&ifft$rank;" );
 
 sub rfft$rank { __fft_internal( "rfft$rank", \@_ ); }
 eval( "*PDL::rfft$rank = \&rfft$rank;" );
 
-sub irfft$rank { __fft_internal( "irfft$rank", \@_ ); }
+sub irfft$rank { my \$a = __fft_internal( "irfft$rank", \@_ ); \$a /= $rshapestr; \$a; }
 eval( "*PDL::irfft$rank = \&irfft$rank;" );
 EOF
 

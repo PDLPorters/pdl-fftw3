@@ -54,8 +54,8 @@ my $Nplans = 0;
   ok_should_make_plan( all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
                       "Basic 1D complex FFT - single precision" );
 
-  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x * $x->nelem/2.0, approx_eps_double) ),
-                      "Basic 1D complex FFT - inverse(forward) should be the same" );
+  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x , approx_eps_double) ),
+                      "Basic 1D complex FFT - inverse(forward) should be the same (normalized)" );
 }
 
 # 2D basic test
@@ -79,8 +79,8 @@ my $Nplans = 0;
   ok_should_make_plan( all( approx( fft2(float $x), float($Xref), approx_eps_single) ),
      "Basic 2D complex FFT - single precision" );
 
-  ok_should_make_plan( all( approx( ifft2(fft2($x)), $x * $x->nelem/2.0, approx_eps_double) ),
-                      "Basic 2D complex FFT - inverse(forward) should be the same" );
+  ok_should_make_plan( all( approx( ifft2(fft2($x)), $x, approx_eps_double) ),
+                      "Basic 2D complex FFT - inverse(forward) should be the same (normalized)" );
 }
 
 # lots of 1D ffts threaded in a 2d array
@@ -97,7 +97,7 @@ my $Nplans = 0;
   ok_should_make_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
      "1D FFTs threaded inside a 2D piddle" );
 
-  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x * $x->dim(1), approx_eps_double) ),
+  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x , approx_eps_double) ),
                       "1D FFTs threaded inside a 2D piddle - inverse(forward) should be the same" );
 }
 
@@ -478,15 +478,15 @@ my $Nplans = 0;
                        "rfft basic test - forward - 7long" );
 
   my $x6_back = irfft1($fx6_ref->slice(':,0:3'), zeros(6) );
-  ok_should_make_plan( all( approx( $x6, $x6_back / 6.0, approx_eps_double) ),
+  ok_should_make_plan( all( approx( $x6, $x6_back, approx_eps_double) ),
                        "rfft basic test - backward - 6long - output in arglist" );
 
   $x6_back = irfft1($fx6_ref->slice(':,0:3'));
-  ok_should_reuse_plan( all( approx( $x6, $x6_back / 6.0, approx_eps_double) ),
+  ok_should_reuse_plan( all( approx( $x6, $x6_back, approx_eps_double) ),
                         "rfft basic test - backward - 6long - output returned" );
 
   my $x7_back = irfft1($fx7_ref->slice(':,0:3'), zeros(7) );
-  ok_should_make_plan( all( approx( $x7, $x7_back / 7.0, approx_eps_double) ),
+  ok_should_make_plan( all( approx( $x7, $x7_back, approx_eps_double) ),
                        "rfft basic test - backward - 7long" );
 }
 
@@ -549,29 +549,29 @@ my $Nplans = 0;
 
   # backward
   my $x64_back = irfft2($x64_ref->slice(':,0:3,:') );
-  ok_should_make_plan( all( approx( $x64, $x64_back / (6.0 * 4.0), approx_eps_double) ),
+  ok_should_make_plan( all( approx( $x64, $x64_back, approx_eps_double) ),
                        "rfft 2d test - backward - 6,4 - output returned" );
 
   $x64_back = zeros(6,4);
   irfft2($x64_ref->slice(':,0:3,:'), $x64_back );
-  ok_should_reuse_plan( all( approx( $x64, $x64_back / (6.0 * 4.0), approx_eps_double) ),
+  ok_should_reuse_plan( all( approx( $x64, $x64_back, approx_eps_double) ),
                         "rfft 2d test - backward - 6,4 - output in arglist" );
 
   my $x65_back = irfft2($x65_ref->slice(':,0:3,:') );
-  ok_should_make_plan( all( approx( $x65, $x65_back / (6.0 * 5.0), approx_eps_double) ),
+  ok_should_make_plan( all( approx( $x65, $x65_back, approx_eps_double) ),
                        "rfft 2d test - backward - 6,5 - output returned" );
 
   $x65_back = zeros(6,5);
   irfft2($x65_ref->slice(':,0:3,:'), $x65_back );
-  ok_should_reuse_plan( all( approx( $x65, $x65_back / (6.0 * 5.0), approx_eps_double) ),
+  ok_should_reuse_plan( all( approx( $x65, $x65_back, approx_eps_double) ),
                         "rfft 2d test - backward - 6,5 - output in arglist" );
 
   my $x74_back = irfft2($x74_ref->slice(':,0:3,:'), zeros(7,4) );
-  ok_should_make_plan( all( approx( $x74, $x74_back / (7.0 * 4.0), approx_eps_double) ),
+  ok_should_make_plan( all( approx( $x74, $x74_back, approx_eps_double) ),
                        "rfft 2d test - backward - 7,4" );
 
   my $x75_back = irfft2($x75_ref->slice(':,0:3,:'), zeros(7,5) );
-  ok_should_make_plan( all( approx( $x75, $x75_back / (7.0 * 5.0), approx_eps_double) ),
+  ok_should_make_plan( all( approx( $x75, $x75_back, approx_eps_double) ),
                        "rfft 2d test - backward - 7,5" );
 }
 
