@@ -20,7 +20,7 @@ sub __fft_internal
 {
   my $thisfunction = shift;
 
-  my ($do_inverse_fft, $is_real_fft, $rank) = $thisfunction =~ /^(i?)((?:real)?).*fft([0-9]+)/;
+  my ($do_inverse_fft, $is_real_fft, $rank) = $thisfunction =~ /^(i?)((?:r)?).*fft([0-9]+)/;
 
   # first I parse the variables. This is a very direct translation of what PP
   # does normally. Plan-creation has to be outside of PP, so I must re-do this
@@ -67,7 +67,7 @@ EOF
   # I now have the arguments and the plan. Go!
   my $internal_function =
     $is_real_fft ?
-    ( $do_inverse_fft ? "PDL::__irealfft$rank" : "PDL::__realfft$rank") : "PDL::__fft$rank";
+    ( $do_inverse_fft ? "PDL::__irfft$rank" : "PDL::__rfft$rank") : "PDL::__fft$rank";
   eval( $internal_function . '( $in, $out, $plan );' );
   barf "$thisfunction: eval failed calling the internal FFT routine: $@" if $@;
 

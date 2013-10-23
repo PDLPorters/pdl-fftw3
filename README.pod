@@ -16,7 +16,7 @@ This is a PDL binding to version 3 of the FFTW library. Supported are complex
 
  # Basic functionality
  my $x = sin( sequence(100) * 2.0 ) + 2.0 * cos( sequence(100) / 3.0 );
- my $F = realfft1( $x );
+ my $F = rfft1( $x );
  gplot( with => 'lines', inner($F,$F));
 
  =====>
@@ -69,8 +69,8 @@ This is a PDL binding to version 3 of the FFTW library. Supported are complex
  my $y2   = exp( 0.2*($x - 50.5) ** (-2.0) );
 
  # compute the correlation
- my $F12  = realfft1( cat($y1,$y2) );
- my $corr = irealfft1( Cmul(      $F12(:,:,(1)),
+ my $F12  = rfft1( cat($y1,$y2) );
+ my $corr = irfft1( Cmul(      $F12(:,:,(1)),
                             Cconj $F12(:,:,(0)) ) );
  # and find the peak
  say maximum_ind($corr);
@@ -92,9 +92,9 @@ A common use case is to transform purely-real data. This data has 0 for its
 complex component, and FFTW can take advantage of this to compute the FFT faster
 and using less memory. Since a Fourier Transform of a real signal has an even
 real part and an odd imaginary part, only 1/2 of the spectrum is needed. These
-forward real -> complex transforms are supported with the C<realfftN> functions.
+forward real -> complex transforms are supported with the C<rfftN> functions.
 The backward version of this transform is complex -> real and is supported with
-the C<irealfftN> functions.
+the C<irfftN> functions.
 
 =head2 Basic usage details
 
@@ -113,7 +113,7 @@ All the functions in this module support PDL threading. For instance, if we have
 4 different image piddles C<$a>, C<$b>, C<$c>, C<$d> and we want to compute
 their 2D FFTs at the same time, we can say
 
- my $ABCD_transformed = realfft2( PDL::cat( $a, $b, $c, $d) );
+ my $ABCD_transformed = rfft2( PDL::cat( $a, $b, $c, $d) );
 
 This takes advantage of PDL's automatic parallelization, if appropriate (See
 L<PDL::ParallelCPU>).
@@ -150,11 +150,11 @@ and C<int(19/2)+1 == 10>).
 
 I<Without any extra information this module assumes the even-sized input>.
 
-Thus C<irealfft1( sequence(2,10) )-E<gt>dim(0) == 18> is true. If we want the odd-sized output, we have to explicitly pass this into the function like this:
+Thus C<irfft1( sequence(2,10) )-E<gt>dim(0) == 18> is true. If we want the odd-sized output, we have to explicitly pass this into the function like this:
 
- irealfft1( sequence(2,10), zeros(19) )
+ irfft1( sequence(2,10), zeros(19) )
 
-Here I create a new output piddle with the C<zeros> function; C<irealfft1> then
+Here I create a new output piddle with the C<zeros> function; C<irfft1> then
 fills in this piddle with the result of the computation. This module validates
 all of its input, so only 18 and 19 are valid here. An error will be thrown if
 you try to pass in C<zeros(20)>.
@@ -162,7 +162,7 @@ you try to pass in C<zeros(20)>.
 This all means that the following will produce surprising results if
 C<$x-E<gt>dim(0)> isn't even
 
- irealfft1( realfft1( $x ) )
+ irfft1( rfft1( $x ) )
 
 =head2 FFT details
 
@@ -191,7 +191,7 @@ the user I<must> make sure the dimensions match. The following are equivalent:
 The basic complex <-> complex backward FFT. Everything is exactly like in the
 C<fftN> functions, except the inverse transform is computed.
 
-=head2 realfftN (realfft1, realfft2, realfft3, ...)
+=head2 rfftN (rfft1, rfft2, rfft3, ...)
 
 The real -> complex FFT. Function names all contain C<N>, the rank of this
 transform. These functions all take one input piddle and one output piddle. The
@@ -200,11 +200,11 @@ described in L<Data formats>. The output can be passed in as the 2nd argument,
 if desired. If the output piddle is passed in, the user I<must> make sure the
 dimensions match.
 
-=head2 irealfftN (irealfft1, irealfft2, irealfft3, ...)
+=head2 irfftN (irfft1, irfft2, irfft3, ...)
 
 The complex -> real inverse FFT. Function names all contain C<N>, the rank of
 this transform. Argument passing and interpretation is as described in
-C<realfftN>. Please read L<Data formats> for details about dimension
+C<rfftN>. Please read L<Data formats> for details about dimension
 interpretation. There's an ambiguity about the output dimensionality, which is
 described in that section.
 

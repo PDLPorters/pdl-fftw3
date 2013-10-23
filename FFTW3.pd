@@ -47,14 +47,14 @@ eval( "*PDL::fft$rank = \&fft$rank;" );
 sub ifft$rank { __fft_internal( "ifft$rank", \@_ ); }
 eval( "*PDL::ifft$rank = \&ifft$rank;" );
 
-sub realfft$rank { __fft_internal( "realfft$rank", \@_ ); }
-eval( "*PDL::realfft$rank = \&realfft$rank;" );
+sub rfft$rank { __fft_internal( "rfft$rank", \@_ ); }
+eval( "*PDL::rfft$rank = \&rfft$rank;" );
 
-sub irealfft$rank { __fft_internal( "irealfft$rank", \@_ ); }
-eval( "*PDL::irealfft$rank = \&irealfft$rank;" );
+sub irfft$rank { __fft_internal( "irfft$rank", \@_ ); }
+eval( "*PDL::irfft$rank = \&irfft$rank;" );
 EOF
 
-  pp_add_exported( "fft$rank", "ifft$rank", "realfft$rank", "irealfft$rank" );
+  pp_add_exported( "fft$rank", "ifft$rank", "rfft$rank", "irfft$rank" );
 }
 
 pp_done();
@@ -118,7 +118,7 @@ if( $PDL(complex)->ndims <= 1 || $PDL(complex)->dims[1] <= 0 )
 EOF
   $pp_def{Pars} = "real($dims_real_string); [o]complex($dims_complex_string);";
   $pp_def{Code} = $code_real_forward;
-  pp_def( "__realfft$rank", %pp_def );
+  pp_def( "__rfft$rank", %pp_def );
 
   # backward
   # I have the complex dimensions. Have nhalf, but not n1
@@ -138,5 +138,5 @@ if( $PDL(real)->dims[0] <= 0 )
 EOF
   $pp_def{Pars} = "complex($dims_complex_string); [o]real($dims_real_string);";
   $pp_def{Code} = $code_real_backward;
-  pp_def( "__irealfft$rank", %pp_def );
+  pp_def( "__irfft$rank", %pp_def );
 }
