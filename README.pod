@@ -173,7 +173,7 @@ that
 
  ifft1( fft1( $x ) )
 
-is a slow approximate no-op, if C<$x> is well-behaved.  
+is a slow approximate no-op, if C<$x> is well-behaved.
 
 This is different from the behavior of the underlying FFTW3 library itself,
 but more consistent with other FFT packages for popular analysis languages
@@ -196,14 +196,14 @@ The 0 dim of the input PDL must have size 2 and run over (real,imaginary)
 components. The transform is carried out over dims 1 through N.
 
 The fftn form takes a minimum of two arguments: the PDL to transform,
-and the number of dimensions to transform as a separate argument. 
+and the number of dimensions to transform as a separate argument.
 
 The following are equivalent:
 
  $X = fftn( $x, 1 );
  $X = fft1( $x );
  fft1( $x, my $X = $x->zeros );
- 
+
 
 =head2 ifftN (ifft1, ifft2, ifft3, ..., fftn)
 
@@ -223,14 +223,14 @@ These functions all take one input piddle and one output piddle. The
 dimensions of the input and the output are not identical, but are
 related as described in L<Data formats>. The output can be passed in
 as the last argument, if desired. If the output piddle is passed in,
-the user I<must> make sure the dimensions match. 
+the user I<must> make sure the dimensions match.
 
 In the C<rfftn> form, the rank is the second argument.
 
-The following are equivalent: 
+The following are equivalent:
 
  $X = rfftn( $x, 1 );
- $X = rfft1( $x ); 
+ $X = rfft1( $x );
  rfft1( $x, my $X = $x->zeroes );
 
 =head2 irfftN (irfft1, irfft2, irfft3, ..., irfftn)
