@@ -23,7 +23,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 158;
+  plan tests => 170;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -701,8 +701,50 @@ my $Nplans = 0;
                        "3D real backward FFT preserves its input" );
 }
 
+# Check parameterized operation
+{
+    my $a = sequence(2,4,4,4)==0;
+    my $b = fftn($a,1);
+    my $btemplate = zeroes($a);
+    $btemplate->slice('(0),:,(0),(0)') .= 1;
+    ok_should_make_plan( all( approx( $b, $btemplate, approx_eps_double ) ),
+			 "parameterized forward complex FFT works (1d on a 1+3d var)" );
 
 
+    $b = fftn($a,2);
+    $btemplate .= 0;
+    $btemplate->slice('(0),:,:,(0)') .= 1;
+    ok_should_make_plan( all( approx( $b, $btemplate, approx_eps_double ) ),
+			 "parameterized forward complex FFT works (2d on a 1+3d var)" );
+
+    $b = fftn($a,3);
+    $btemplate .= 0;
+    $btemplate->slice('(0),:,:,:') .= 1;
+    ok_should_make_plan( all( approx( $b, $btemplate, approx_eps_double ) ),
+			 "parameterized forward complex FFT works (3d on a 1+3d var)" );
+
+    # inverse on 2d -- should leave the 3rd dimension alone
+    my $c = ifftn($b,2);
+    my $ctemplate= zeroes($c);
+    $ctemplate->slice('(0),(0),(0)') .= 1;
+    ok_should_make_plan( all( approx( $c, $ctemplate, approx_eps_double ) ),
+			 "parameterized reverse complex FFT works (2d on a 1+3d var)" );
+
+    $a = sequence(4,4,4)==0;
+    $b = rfftn($a,1);
+    $btemplate = zeroes($b);
+    $btemplate->slice('(0),:,(0),(0)') .= 1;
+    ok_should_make_plan( all( approx( $b, $btemplate, approx_eps_double ) ),
+			 "parameterized forward real FFT works (1d on a 3d var)" );
+
+    # inverse on 2d -- should be a normalized forward on the non-transformed direction
+    $c = irfftn($b,2);
+    $ctemplate = zeroes($a);
+    $ctemplate->slice('(0),:,(0)') .= 0.25;
+    ok_should_make_plan( all( approx( $c, $ctemplate, approx_eps_double) ),
+			 "parameterized reverse real FFT works (2d on a 3d var)" );
+
+}
 
 
 

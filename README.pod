@@ -182,18 +182,30 @@ including PDL.
 
 =head1 FUNCTIONS
 
-=head2 fftN (fft1, fft2, fft3, ...)
+=head2 fftN (fft1, fft2, fft3, ..., fftn)
 
-The basic complex <-> complex FFT. Function names all contain C<N>, the rank of
-this transform. These functions all take one input piddle and one output piddle.
-The dimensions of the input and the output are identical. The output can be
-passed in as the 2nd argument, if desired. If the output piddle is passed in,
-the user I<must> make sure the dimensions match. The following are equivalent:
+The basic complex <-> complex FFT. You can pass in the rank as a
+parameter with the C<fftn> form, or append the rank to the function
+name for ranks up to 9. These functions all take one input piddle and
+one output piddle.  The dimensions of the input and the output are
+identical. The output parameter is optional and, if present, must be
+the last argument. If the output piddle is passed in, the user I<must>
+make sure the dimensions match.
 
+The 0 dim of the input PDL must have size 2 and run over (real,imaginary)
+components. The transform is carried out over dims 1 through N.
+
+The fftn form takes a minimum of two arguments: the PDL to transform,
+and the number of dimensions to transform as a separate argument. 
+
+The following are equivalent:
+
+ $X = fftn( $x, 1 );
  $X = fft1( $x );
  fft1( $x, my $X = $x->zeros );
+ 
 
-=head2 ifftN (ifft1, ifft2, ifft3, ...)
+=head2 ifftN (ifft1, ifft2, ifft3, ..., fftn)
 
 The basic, properly normalized, complex <-> complex backward
 FFT. Everything is exactly like in the C<fftN> functions, except the
@@ -203,22 +215,32 @@ inverse transform is computed and normalized, so that (for example)
 
 is a good approximation of C<$x> itself.
 
-=head2 rfftN (rfft1, rfft2, rfft3, ...)
+=head2 rfftN (rfft1, rfft2, rfft3, ..., rfftn)
 
-The real -> complex FFT. Function names all contain C<N>, the rank of this
-transform. These functions all take one input piddle and one output piddle. The
-dimensions of the input and the output are not identical, but are related as
-described in L<Data formats>. The output can be passed in as the 2nd argument,
-if desired. If the output piddle is passed in, the user I<must> make sure the
-dimensions match.
+The real -> complex FFT. You can pass in the rank with the C<rfftn>
+form, or append the rank to the function name for ranks up to 9.
+These functions all take one input piddle and one output piddle. The
+dimensions of the input and the output are not identical, but are
+related as described in L<Data formats>. The output can be passed in
+as the last argument, if desired. If the output piddle is passed in,
+the user I<must> make sure the dimensions match. 
 
-=head2 irfftN (irfft1, irfft2, irfft3, ...)
+In the C<rfftn> form, the rank is the second argument.
 
-The complex -> real inverse FFT. Function names all contain C<N>, the rank of
-this transform. Argument passing and interpretation is as described in
-C<rfftN>. Please read L<Data formats> for details about dimension
-interpretation. There's an ambiguity about the output dimensionality, which is
-described in that section.
+The following are equivalent: 
+
+ $X = rfftn( $x, 1 );
+ $X = rfft1( $x ); 
+ rfft1( $x, my $X = $x->zeroes );
+
+=head2 irfftN (irfft1, irfft2, irfft3, ..., irfftn)
+
+The complex -> real inverse FFT. You can pass in the rank with the
+C<irfftn> form, or append the rank to the function name for ranks up
+to 9. Argument passing and interpretation is as described in
+C<rfftN> above. Please read L<Data formats> for details about dimension
+interpretation. There's an ambiguity about the output dimensionality,
+which is described in that section.
 
 =head1 AUTHOR
 

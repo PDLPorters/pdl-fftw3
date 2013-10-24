@@ -61,6 +61,47 @@ EOF
   pp_add_exported( "fft$rank", "ifft$rank", "rfft$rank", "irfft$rank" );
 }
 
+
+##########
+# Generate the fftn case.  This should probably be done more prettily; for now it's just 
+# a springboard that jumps into __fft_internal.
+pp_addpm ( {At=> 'Bot'}, <<'EOF' );
+sub _rank_springboard {
+  my ($name, $source, $rank, @rest) = @_;
+  my $inverse = ($name =~ m/^i/);
+  my $real    = ($name =~ m/r/);
+
+  unless(defined $rank) {
+    die "${name}n: second argument must be the rank of the transform you want";
+  }
+  $rank = 0+$rank;  # force numeric context
+  unless($rank>=1 ) {
+    die "${name}n: second argument (rank) must be between 1 and $maxrank";
+  }
+
+  my $active_lo = ($real ? 0 : 1);
+  my $active_hi = ($real ? $rank-1 : $rank);
+
+  unless($source->ndims > $active_hi) {
+    die "${name}n: rank is $rank but input has only ".($active_hi-$active_lo)." active dims!";
+  }
+
+  my $out = __fft_internal( $name.$rank, $source, @rest );
+
+  if($inverse) {
+    $out /= $out->shape->slice("$active_lo:$active_hi")->prodover;
+  }
+  return $out;
+}
+
+sub fftn    { _rank_springboard( "fft",      @_ ) }
+sub ifftn   { _rank_springboard( "ifft",     @_ ) }
+sub rfftn   { _rank_springboard( "rfft",  @_ ) }
+sub irfftn  { _rank_springboard( "irfft", @_ ) }
+
+EOF
+pp_add_exported( map { "${_}fftn" } ('','i','r','ir') );
+
 pp_done();
 
 
