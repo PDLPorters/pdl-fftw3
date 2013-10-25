@@ -9,13 +9,12 @@ use PDL::Core::Dev;
 # a Debian package won't have to include Alien::FFTW3.
 my $cflags;
 my $libs;
-if( eval "require Alien::FFTW3;" ) {
-    ## we have Alien::FFTW3
+if( eval "require Alien::FFTW3" ) {
+
+    ## Ensure at least version 3.3; die if we can't get it.
+    Alien::FFTW3->VERSION(3.3);
+    
     my $p = Alien::FFTW3->precision;
-    unless($p//"") {
-	# (Pedantic -- Alien::FFTW3 is supposed to fail to load if there's no FFTW3 library)
-	die "PDL::FFTW3 - Alien::FFTW3 was unable to find an FFTW3 installation.";
-    }
     unless($p->{'d'} and $p->{'f'}) {
 	die "PDL::FFTW3 - needs both double-precision and single-precision fftw3 libraries\n\t(libfftw3 and libfftw3f). Alien::FFTW3 found only ".(join(",",keys %$p))."\n";
     }
