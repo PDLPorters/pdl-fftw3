@@ -22,14 +22,23 @@ if( eval "require Alien::FFTW3" ) {
     $cflags = Alien::FFTW3->cflags;
     $libs   = Alien::FFTW3->libs;
 } else {
-    ## we don't have Alien::FFTW3 - try to use pkg-config
-    printf "Alien::FFTW3 not found.  Trying pkg-config...\n";
-    $cflags = `pkg-config --cflags fftw3f fftw3`;
-    $libs   = `pkg-config --libs   fftw3f fftw3`;
+    printf "Alien::FFTW3 not found.  Using pkg-config instead...\n";
 
-    unless ($cflags && $libs) {
-	die "Couldn't find the FFTW3 installation (no Alien::FFTW3 - used POSIX pkg-config).\n    Giving up.\n";
-    }
+    require IPC::Run;
+    $cflags = '';
+    $libs   = '';
+    my $err = '';
+    IPC::Run::run( ['pkg-config',
+                    '--cflags',
+                    'fftw3f >= 3.3', 'fftw3 >= 3.3'],
+                   \undef,
+                   \$cflags, \$err ) or die "Couldn't get the fftw flags: '$err'";
+
+    IPC::Run::run( ['pkg-config',
+                    '--libs',
+                    'fftw3f >= 3.3', 'fftw3 >= 3.3'],
+                   \undef,
+                   \$libs, \$err ) or die "Couldn't get the fftw libs: '$err'";
 }
 
 
