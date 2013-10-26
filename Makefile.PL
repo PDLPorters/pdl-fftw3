@@ -71,7 +71,7 @@ $descriptor{AUTHOR} = "Dima Kogan <dima\@secretsauce.net>, Craig DeForest <defor
 $descriptor{ABSTRACT} = "PDL interface to the Fastest Fourier Transform in the West";
 $descriptor{META_ADD} = { resources => {
     homepage => 'http://github.com/dkogan/PDL-FFTW3',
-    repository => 'git://gitub.com/dkogan/PDL-FFTW3.git',
+    repository => 'git://github.com/dkogan/PDL-FFTW3.git',
     bugtracker => 'http://github.com/dkogan/PDL-FFTW3/issues'
 			  }
 };
