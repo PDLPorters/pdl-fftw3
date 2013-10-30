@@ -45,7 +45,7 @@ if( eval "require Alien::FFTW3" ) {
 my @package = qw(FFTW3.pd FFTW3 PDL::FFTW3);
 my %descriptor = pdlpp_stdargs(\@package);
 
-$descriptor{VERSION_FROM}   = 'FFTW3.pd';
+$descriptor{VERSION}   = parseVersion( 'FFTW3.pd');
 $descriptor{OPTIMIZE}  = '-O2';
 $descriptor{CCFLAGS} .= '--std=gnu99';
 
@@ -71,11 +71,19 @@ $descriptor{NO_MYMETA} = 0;
 $descriptor{NAME}   = "PDL::FFTW3";
 $descriptor{AUTHOR} = "Dima Kogan <dima\@secretsauce.net>, Craig DeForest <deforest\@boulder.swri.edu>";
 $descriptor{ABSTRACT} = "PDL interface to the Fastest Fourier Transform in the West";
-$descriptor{META_ADD} = { resources => {
-    homepage => 'http://github.com/dkogan/PDL-FFTW3',
-    repository => 'git://github.com/dkogan/PDL-FFTW3.git',
-    bugtracker => 'http://github.com/dkogan/PDL-FFTW3/issues'
-			  }
+
+$descriptor{META_MERGE} =
+{ resources => {
+                homepage => 'http://github.com/dkogan/PDL-FFTW3',
+                repository => 'git://github.com/dkogan/PDL-FFTW3.git',
+                bugtracker => 'http://github.com/dkogan/PDL-FFTW3/issues'
+               },
+  provides => {
+               'PDL::FFTW3' =>
+               { 'file' => 'FFTW3.pd',
+                 'version' => $descriptor{VERSION}
+               }
+              }
 };
 
 WriteMakefile( %descriptor );
@@ -85,3 +93,17 @@ sub MY::postamble
   pdlpp_postamble(\@package);
 }
 
+sub parseVersion
+{
+  my $file = shift;
+
+  my $infd;
+  open $infd, '<', $file or die "Error: couldn't open file '$file' for version parsing";
+
+  while(<$infd>)
+  {
+    return $1 if /our \$VERSION = '([0-9\.a-zA-Z_]+)'/;
+  }
+
+  die "Error: couldn't parse version from '$file'";
+}
