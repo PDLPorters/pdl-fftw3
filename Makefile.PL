@@ -94,7 +94,7 @@ sub MY::postamble
 
 install ::
 	@echo "Updating PDL documentation database...";
-	@$(PERL) -e "exit if $$ENV{DESTDIR}; use PDL::Doc; eval { PDL::Doc::add_module(q{PDL::FFTW3}); }; ";
+	@$(PERL) -e 'exit if $$ENV{DESTDIR}; use PDL::Doc; eval { PDL::Doc::add_module(q{PDL::FFTW3}); }; ';
 FOO
 }
 
