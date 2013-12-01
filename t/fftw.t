@@ -23,7 +23,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 170;
+  plan tests => 174;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -50,6 +50,9 @@ my $Nplans = 0;
 
   ok_should_make_plan( all( approx( fft1($x), $Xref, approx_eps_double) ),
                       "Basic 1D complex FFT - double precision" );
+
+  ok_should_reuse_plan( all( approx( $x->fft1, $Xref, approx_eps_double) ),
+                        "Basic 1D complex FFT as a method - double precision" );
 
   ok_should_make_plan( all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
                       "Basic 1D complex FFT - single precision" );
@@ -710,6 +713,8 @@ my $Nplans = 0;
     ok_should_make_plan( all( approx( $b, $btemplate, approx_eps_double ) ),
 			 "parameterized forward complex FFT works (1d on a 1+3d var)" );
 
+    ok_should_reuse_plan( all( approx( $a->fftn(1), $btemplate, approx_eps_double ) ),
+                          "parameterized forward complex FFT works (1d on a 1+3d var) - method" );
 
     $b = fftn($a,2);
     $btemplate .= 0;

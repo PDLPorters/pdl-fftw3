@@ -46,16 +46,16 @@ for my $rank (1..$maxrank)
 
   pp_addpm({At => 'Bot'}, <<EOF );
 sub fft$rank { __fft_internal( "fft$rank",\@_ ); }
-eval( "*PDL::fft$rank = \&fft$rank;" );
+*PDL::fft$rank = \\&fft$rank;
 
 sub ifft$rank { my \$a = __fft_internal( "ifft$rank", \@_ ); \$a /= $shapestr; \$a; }
-eval( "*PDL::ifft$rank = \&ifft$rank;" );
+*PDL::ifft$rank = \\&ifft$rank;
 
 sub rfft$rank { __fft_internal( "rfft$rank", \@_ ); }
-eval( "*PDL::rfft$rank = \&rfft$rank;" );
+*PDL::rfft$rank = \\&rfft$rank;
 
 sub irfft$rank { my \$a = __fft_internal( "irfft$rank", \@_ ); \$a /= $rshapestr; \$a; }
-eval( "*PDL::irfft$rank = \&irfft$rank;" );
+*PDL::irfft$rank = \\&irfft$rank;
 EOF
 
   pp_add_exported( "fft$rank", "ifft$rank", "rfft$rank", "irfft$rank" );
@@ -98,6 +98,11 @@ sub fftn    { _rank_springboard( "fft",      @_ ) }
 sub ifftn   { _rank_springboard( "ifft",     @_ ) }
 sub rfftn   { _rank_springboard( "rfft",  @_ ) }
 sub irfftn  { _rank_springboard( "irfft", @_ ) }
+
+*PDL::fftn   = \&fftn;
+*PDL::ifftn  = \&ifftn;
+*PDL::rfftn  = \&rfftn;
+*PDL::irfftn = \&irfftn;
 
 EOF
 pp_add_exported( map { "${_}fftn" } ('','i','r','ir') );
