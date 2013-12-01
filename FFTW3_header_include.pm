@@ -379,7 +379,7 @@ EOF
     if ( !exists $existingPlans{$planID} )
     {
       $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft,
-                                              $do_inverse_fft, $in, $out );
+                                              $do_inverse_fft );
       $_Nplans++;
     }
 

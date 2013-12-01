@@ -1,13 +1,11 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
 IV
-compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in, out )
+compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft )
   SV*  dims_ref
   bool do_double_precision
   bool is_real_fft
   bool do_inverse_fft
-  pdl* in
-  pdl* out
 CODE:
 {
   // Given input and output matrices, this function computes the FFTW plan
@@ -21,13 +19,14 @@ CODE:
   for( int i=0; i<rank; i++)
     dims_row_first[i] = SvIV( *av_fetch( dims_av, rank-i-1, 0) );
 
-  // if out is null, I do a dummy alloc of memory so I can pass the pointer to
-  // the planner
-  void* out_data = out->data;
-  if(out->state & PDL_NOMYDIMS)
-    out_data = do_double_precision ?
-      (void*) fftw_alloc_complex(16) :
-      (void*)fftwf_alloc_complex(16);
+  // I do a dummy alloc of memory so I can pass properly-aligned pointers to the
+  // planner
+  void* in_data = do_double_precision ?
+    (void*) fftw_alloc_complex(16) :
+    (void*)fftwf_alloc_complex(16);
+  void* out_data = do_double_precision ?
+    (void*) fftw_alloc_complex(16) :
+    (void*)fftwf_alloc_complex(16);
 
   void* plan;
   if( !is_real_fft )
@@ -38,12 +37,12 @@ CODE:
     if( !do_double_precision )
       plan =
         fftwf_plan_dft( rank, dims_row_first,
-                        (fftwf_complex*)in->data, (fftwf_complex*)out_data,
+                        (fftwf_complex*)in_data, (fftwf_complex*)out_data,
                         direction, FFTW_ESTIMATE);
     else
       plan =
         fftw_plan_dft( rank, dims_row_first,
-                       (fftw_complex*)in->data, (fftw_complex*)out_data,
+                       (fftw_complex*)in_data, (fftw_complex*)out_data,
                        direction, FFTW_ESTIMATE);
   }
   else
@@ -54,12 +53,12 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftwf_plan_dft_r2c( rank, dims_row_first,
-                              (float*)in->data, (fftwf_complex*)out_data,
+                              (float*)in_data, (fftwf_complex*)out_data,
                               FFTW_ESTIMATE );
       else
         plan =
           fftwf_plan_dft_c2r( rank, dims_row_first,
-                              (fftwf_complex*)in->data, (float*)out_data,
+                              (fftwf_complex*)in_data, (float*)out_data,
                               FFTW_ESTIMATE );
     }
     else
@@ -67,23 +66,26 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftw_plan_dft_r2c( rank, dims_row_first,
-                             (double*)in->data, (fftw_complex*)out_data,
+                             (double*)in_data, (fftw_complex*)out_data,
                              FFTW_ESTIMATE );
       else
         plan =
           fftw_plan_dft_c2r( rank, dims_row_first,
-                             (fftw_complex*)in->data, (double*)out_data,
+                             (fftw_complex*)in_data, (double*)out_data,
                              FFTW_ESTIMATE );
     }
   }
 
-  // out was null; free the dummy pointer
-  if(out->state & PDL_NOMYDIMS)
+  if(do_double_precision)
   {
-    if(do_double_precision) fftw_free (out_data);
-    else                    fftwf_free(out_data);
+    fftw_free (in_data);
+    fftw_free (out_data);
   }
-
+  else
+  {
+    fftwf_free(in_data);
+    fftwf_free(out_data);
+  }
 
   if( plan == NULL )
     XSRETURN_UNDEF;
