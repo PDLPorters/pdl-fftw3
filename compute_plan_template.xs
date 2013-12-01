@@ -1,6 +1,6 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
-void *
+IV
 compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in, out )
   SV*  dims_ref
   bool do_double_precision
@@ -88,7 +88,7 @@ CODE:
   if( plan == NULL )
     XSRETURN_UNDEF;
   else
-    RETVAL = (void*)PTR2IV(plan);
+    RETVAL = PTR2IV(plan);
 }
 OUTPUT:
  RETVAL
