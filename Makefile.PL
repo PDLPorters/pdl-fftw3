@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
+use Config;
 use PDL::Core::Dev;
 
 ##############################
@@ -47,7 +48,7 @@ my %descriptor = pdlpp_stdargs(\@package);
 
 $descriptor{VERSION}   = parseVersion( 'FFTW3.pd');
 $descriptor{OPTIMIZE}  = '-O2';
-$descriptor{CCFLAGS} .= '--std=gnu99';
+$descriptor{CCFLAGS} .= '--std=gnu99 ' . $Config{ccflags};
 
 # I support single and double precision FFTW calls, so both fftw and fftw3f
 push @{$descriptor{LIBS}  },  $libs;
