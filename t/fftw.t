@@ -23,7 +23,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 174;
+  plan tests => 176;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -749,6 +749,20 @@ my $Nplans = 0;
     ok_should_make_plan( all( approx( $c, $ctemplate, approx_eps_double) ),
 			 "parameterized reverse real FFT works (2d on a 3d var)" );
 
+}
+
+# Alignment checks. PDL::FFTW wants aligned input. Here I pass in sliced arrays,
+# so the start (in the original data) wouldn't be aligned anymore. PDL makes a
+# copy in such cases, so this should still work
+{
+  my $x6 = float( sequence(6)**2 );
+  my $x5 = float( (sequence(5) + 1)**2 );
+
+  my $fft_slice = $x6->slice('1:')->rfft1;
+  my $fft_new   = $x5->rfft1;
+
+  ok_should_make_plan( all( approx( $fft_slice, $fft_new, approx_eps_single) ),
+                       "alignment test" );
 }
 
 
