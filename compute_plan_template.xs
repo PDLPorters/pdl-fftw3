@@ -82,13 +82,13 @@ OUTPUT:
 
 
 
-bool
+int
 is_same_data( in, out )
   pdl* in
   pdl* out
 CODE:
 {
-  RETVAL = in->data == out->data;
+  RETVAL = (in->data == out->data) ? 1 : 0;
 }
 OUTPUT:
  RETVAL
