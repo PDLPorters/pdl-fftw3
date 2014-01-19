@@ -371,15 +371,20 @@ EOF
     $_last_do_double_precision = $do_double_precision;
 
     my $do_inplace = is_same_data( $in, $out );
+    my $in_alignment = get_data_alignment( $in );
+    my $out_alignment = get_data_alignment( $out );
     my $planID = join('_',
                       $thisfunction,
                       $do_double_precision,
                       $do_inplace,
-                      @dims);
+                      @dims,
+                      $in_alignment,
+                      $out_alignment);
+                   print STDERR "Checking for planID=$planID\n";
     if ( !exists $existingPlans{$planID} )
     {
-      $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft,
-                                              $do_inverse_fft );
+                   print STDERR "Computing for planID=$planID\n";
+      $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft, $do_inverse_fft, $in, $out );
       $_Nplans++;
     }
 

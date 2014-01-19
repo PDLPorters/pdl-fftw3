@@ -1,11 +1,13 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
 IV
-compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft )
+compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in_pdl, out_pdl )
   SV*  dims_ref
   bool do_double_precision
   bool is_real_fft
   bool do_inverse_fft
+  pdl* in_pdl
+  pdl* out_pdl
 CODE:
 {
   // Given input and output matrices, this function computes the FFTW plan
@@ -19,14 +21,8 @@ CODE:
   for( int i=0; i<rank; i++)
     dims_row_first[i] = SvIV( *av_fetch( dims_av, rank-i-1, 0) );
 
-  // I do a dummy alloc of memory so I can pass properly-aligned pointers to the
-  // planner
-  void* in_data = do_double_precision ?
-    (void*) fftw_alloc_complex(16) :
-    (void*)fftwf_alloc_complex(16);
-  void* out_data = do_double_precision ?
-    (void*) fftw_alloc_complex(16) :
-    (void*)fftwf_alloc_complex(16);
+  void* in_data = in_pdl->data;
+  void* out_data = out_pdl->data;
 
   void* plan;
   if( !is_real_fft )
@@ -76,17 +72,6 @@ CODE:
     }
   }
 
-  if(do_double_precision)
-  {
-    fftw_free (in_data);
-    fftw_free (out_data);
-  }
-  else
-  {
-    fftwf_free(in_data);
-    fftwf_free(out_data);
-  }
-
   if( plan == NULL )
     XSRETURN_UNDEF;
   else
@@ -104,6 +89,24 @@ is_same_data( in, out )
 CODE:
 {
   RETVAL = in->data == out->data;
+}
+OUTPUT:
+ RETVAL
+
+
+int
+get_data_alignment( in )
+  pdl* in
+CODE:
+{
+  int alignment;
+
+  alignment = ( (UVTYPE)in->data % (UVTYPE)16 == 0 ) ? 16 :
+              ( (UVTYPE)in->data % (UVTYPE) 8 == 0 ) ?  8 :
+              ( (UVTYPE)in->data % (UVTYPE) 4 == 0 ) ?  4 :
+              ( (UVTYPE)in->data % (UVTYPE) 2 == 0 ) ?  2 : 1;
+
+  RETVAL = alignment;
 }
 OUTPUT:
  RETVAL
