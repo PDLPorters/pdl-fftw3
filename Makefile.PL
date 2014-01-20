@@ -65,7 +65,8 @@ $descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_r
 $descriptor{PREREQ_PM} = {'PDL'=>2.001};
 $descriptor{CONFIGURE_REQUIRES} = {'PDL::Core::Dev' =>0,
                                    'IPC::Run'       =>0,
-                                   'Alien::FFTW3'   =>0};
+                                   #'Alien::FFTW3'   =>0,
+                                };
 $descriptor{BUILD_REQUIRES} = {'PDL::PP'=>0};
 $descriptor{NO_MYMETA} = 0;
 
