@@ -25,8 +25,6 @@ BEGIN
 {
   plan tests => 176;
   use_ok( 'PDL::FFTW3' );
-
-  *PDL::get_data_alignment = \&PDL::FFTW3::get_data_alignment;
 }
 
 use constant approx_eps_double => 1e-8;
@@ -37,8 +35,6 @@ my $Nplans = 0;
 # 1D basic test
 {
   my $x = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
-
-  print STDERR "\$x alignment is " . $x->get_data_alignment . "\n";
 
   # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
   my $Xref = pdl( [45.0000000000000,+285.0000000000000],
