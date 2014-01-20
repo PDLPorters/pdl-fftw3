@@ -59,8 +59,27 @@ Exactly 1 or 2 arguments are required. Instead I got $Nargs args. Giving up.
 EOF
   }
 
-  validateArguments( $rank, $is_real_fft, $do_inverse_fft, $thisfunction, $in, $out );
+  # make sure the in/out types match. Convert $in if needed. This needs to
+  # happen before we instantiante $out (if it's null) to make sure we know the
+  # type
   processTypes( $thisfunction, \$in, \$out );
+
+  # I now create a piddle for the null output. Normally PP does this, but I need
+  # to have the piddle made to create plans. If I don't, the alignment may
+  # differ between plan-time and run-time
+  if( $out->isnull )
+  {
+    my @dims = getOutDims($in, $is_real_fft, $do_inverse_fft);
+    $out .= zeros($in->type, @dims);
+  }
+
+  validateArguments( $rank, $is_real_fft, $do_inverse_fft, $thisfunction, $in, $out );
+
+  # I need to physical-ize the piddles before I make a plan. Again, normally PP
+  # does this, but to make sure alignments match, I need to do this myself, now
+  $in ->make_physical;
+  $out->make_physical;
+
   my $plan = getPlan( $thisfunction, $rank, $is_real_fft, $do_inverse_fft, $in, $out );
   barf "$thisfunction couldn't make a plan. Giving up\n" unless defined $plan;
 
@@ -77,7 +96,42 @@ EOF
 
 
 
-  sub validateArguments
+  sub getOutDims
+  {
+    my ($in, $is_real_fft, $do_inverse_fft) = @_;
+
+    my @dims = $in->dims;
+
+    if ( !$is_real_fft )
+    {
+      # complex fft. Output is the same size as the input.
+    }
+    elsif ( !$do_inverse_fft )
+    {
+      # forward real fft
+      my $d0 = shift @dims;
+      unshift @dims, 1+int($d0/2);
+      unshift @dims, 2;
+    }
+    else
+    {
+      # backward real fft
+      #
+      # there's an ambiguity here. I want int($out->dim(0)/2) + 1 == $in->dim(1),
+      # however this could mean that
+      #  $out->dim(0) = 2*$in->dim(1) - 2
+      # or
+      #  $out->dim(0) = 2*$in->dim(1) - 1
+      #
+      # WITHOUT ANY OTHER INFORMATION, I ASSUME EVEN INPUT SIZES, SO I ASSUME
+      #  $out->dim(0) = 2*$in->dim(1) - 2
+      shift @dims;
+      $dims[0] = 2*($dims[0])-2;
+    }
+    return @dims;
+  }
+
+sub validateArguments
   {
     my ($rank, $is_real_fft, $do_inverse_fft, $thisfunction, $in, $out) = @_;
 
@@ -107,8 +161,6 @@ EOF
 
       if( $arg->isnull )
       {
-        next if $iarg==1; # null is allowed for out
-
         barf "$thisfunction: don't know what to do with a null input. Giving up";
       }
 
@@ -118,15 +170,12 @@ EOF
       { validateArgumentDimensions_real( $rank, $do_inverse_fft, $thisfunction, $iarg, $arg); }
     }
 
-    if ( ! $out->isnull )
-    {
-      # we have an explicit output piddle we're filling in. Make sure the
-      # input/output dimensions match up
-      if( !$is_real_fft )
-      { matchDimensions_complex($thisfunction, $rank, $in, $out); }
-      else
-      { matchDimensions_real($thisfunction, $rank, $do_inverse_fft, $in, $out); }
-    }
+    # we have an explicit output piddle we're filling in. Make sure the
+    # input/output dimensions match up
+    if ( !$is_real_fft )
+    { matchDimensions_complex($thisfunction, $rank, $in, $out); }
+    else
+    { matchDimensions_real($thisfunction, $rank, $do_inverse_fft, $in, $out); }
 
 
 
@@ -283,22 +332,18 @@ EOF
     # Input and output types must match, and I can only really deal with float and
     # double. If given an output, I refuse to tweak the type of the output,
     # otherwise, I upgrade to float and then to double
-
-    my $targetType;
-
     if( $$out->isnull )
     {
-      # Output is generated. I thus only worry about the type of the input. If
-      # It's not one of the types I like, upgrade to a float
-      my $in_type  = $$in->type;
-      $targetType = ( $in_type < float ) ? (float) : $in_type;
-
-      forceType( $in, $targetType );
+      if( $$in->type < float )
+      {
+        forceType( $in, (float) );
+      }
     }
     else
     {
       # I'm given an output. Make sure this is of a type I can work with,
       # otherwise give up
+      my $targetType;
 
       my $out_type = $$out->type;
 
@@ -343,27 +388,8 @@ EOF
     else
     {
       # backward real FFT
-      #
-      # if we're given an output, then this is the dimensionality. Otherwise
-      # there's an ambiguity. I want int($out->dim(0)/2) + 1 != $in->dim(1),
-      # however this could mean that
-      #  $out->dim(0) = 2*$in->dim(1) - 2
-      # or
-      #  $out->dim(0) = 2*$in->dim(1) - 1
-      #
-      # WITHOUT ANY OTHER INFORMATION, I ASSUME EVEN INPUT SIZES, SO I ASSUME
-      #  $out->dim(0) = 2*$in->dim(1) - 2
-      if( ! $out->isnull )
-      {
-        @dims = $out->dims;
-      }
-      else
-      {
-        @dims = $in->dims;
-        shift @dims;
-
-        $dims[0] = $dims[0]*2 - 2;
-      }
+      # we're given an output, and this is the dimensionality
+      @dims = $out->dims;
     }
     splice @dims, $rank;
 
