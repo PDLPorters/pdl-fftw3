@@ -23,7 +23,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 176;
+  plan tests => 174;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -751,18 +751,45 @@ my $Nplans = 0;
 
 }
 
-# Alignment checks. PDL::FFTW wants aligned input. Here I pass in sliced arrays,
-# so the start (in the original data) wouldn't be aligned anymore. PDL makes a
-# copy in such cases, so this should still work
+# Alignment checks. Here I try to fft purposely-unaligned piddles to make sure
+# that PDL::FFTW3 both makes a new plan and computes the data correctly. I only
+# create an input offset
+#
+# This test isn't written perfectly. It assumes that $x->copy is aligned at 16
+# bytes, which is true on my amd64 box, but is not true in general.
+# Additionally, FFTW crashes if alignment is particularly bad, so I disable
+# these tests.
+if(0)
 {
-  my $x6 = float( sequence(6)**2 );
-  my $x5 = float( (sequence(5) + 1)**2 );
+  my $x = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
 
-  my $fft_slice = $x6->slice('1:')->rfft1;
-  my $fft_new   = $x5->rfft1;
+  # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
+  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
+                  [-158.8841768587627,+17.7490974608742],
+                  [-73.8190960235587,-28.6459544426446],
+                  [-41.3271264002680,-38.7279671349711],
+                  [-21.2459848116453,-42.8475374738350],
+                  [-5.0000000000000,-45.0000000000000],
+                  [11.2459848116453,-46.0967344361641],
+                  [31.3271264002680,-45.9933924150247],
+                  [63.8190960235587,-42.4097736473563],
+                  [148.8841768587627,-13.0277379108784] );
 
-  ok_should_make_plan( all( approx( $fft_slice, $fft_new, approx_eps_single) ),
-                       "alignment test" );
+  my $length = length ${$x->get_dataref};
+  for my $offset (4,8)
+  {
+    # this assumes a 16-aligned piddle is created. This is true on my amd64 box
+    my $x_offset = $x->copy;
+
+    # create an offset in the data inside the piddle
+    ${$x_offset->get_dataref} .= ' ' x $offset;
+    substr(${$x_offset->get_dataref}, 0, $offset) = "";
+    substr(${$x_offset->get_dataref}, 0) = ${$x->get_dataref};
+    $x_offset->upd_data();
+
+    ok_should_make_plan( all( approx( fft1($x_offset), $Xref, approx_eps_double) ),
+                         "Basic 1D complex FFT - unaligned $offset bytes" );
+  }
 }
 
 
