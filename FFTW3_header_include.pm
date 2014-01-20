@@ -377,13 +377,11 @@ EOF
                       $thisfunction,
                       $do_double_precision,
                       $do_inplace,
-                      @dims,
                       $in_alignment,
-                      $out_alignment);
-                   print STDERR "Checking for planID=$planID\n";
+                      $out_alignment,
+                      @dims);
     if ( !exists $existingPlans{$planID} )
     {
-                   print STDERR "Computing for planID=$planID\n";
       $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft, $do_inverse_fft, $in, $out );
       $_Nplans++;
     }
