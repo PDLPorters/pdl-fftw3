@@ -18,6 +18,10 @@ use PDL::Types;
 set_autopthread_targ(2);
 set_autopthread_size(0);
 
+# With potentially-unaligned input I can no longer predict when a new plan will
+# be created, so I disable plan-creation checks. When PDL itself produces only
+# aligned data buffers this should be re-enabled.
+my $do_check_plan_creations = undef;
 
 use Test::More;
 
@@ -812,15 +816,24 @@ sub ok_should_reuse_plan
 sub check_new_plan
 {
   my $planname = shift;
-  ok( $PDL::FFTW3::_Nplans == $Nplans+1,
-      "$planname: should make a new plan" );
+
+ SKIP: {
+    skip "Plan creation checks disabled because pdl memory may be unaligned", 1 unless $do_check_plan_creations;
+    ok( $PDL::FFTW3::_Nplans == $Nplans+1,
+        "$planname: should make a new plan" );
+  }
+
   $Nplans = $PDL::FFTW3::_Nplans;
 }
 
 sub check_reused_plan
 {
   my $planname = shift;
-  ok( $PDL::FFTW3::_Nplans == $Nplans,
-      "$planname: should reuse an existing plan" );
+
+ SKIP: {
+    skip "Plan creation checks disabled because pdl memory may be unaligned", 1 unless $do_check_plan_creations;
+    ok( $PDL::FFTW3::_Nplans == $Nplans,
+        "$planname: should reuse an existing plan" );
+  }
   $Nplans = $PDL::FFTW3::_Nplans;
 }
