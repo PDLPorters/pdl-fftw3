@@ -1,1 +1,6 @@
-^patches
+patches/
+PDL-FFTW3-*.tar.gz
+*~
+*.o
+*.c
+*.bs
