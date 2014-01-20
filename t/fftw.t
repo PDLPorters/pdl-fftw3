@@ -27,7 +27,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 174;
+  plan tests => 176;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -495,6 +495,29 @@ my $Nplans = 0;
   my $x7_back = irfft1($fx7_ref->slice(':,0:3'), zeros(7) );
   ok_should_make_plan( all( approx( $x7, $x7_back, approx_eps_double) ),
                        "rfft basic test - backward - 7long" );
+
+
+  # 2 1d threaded real ffts with odd size, single-precision. Each of the
+  # threaded data-sets can have different alignment, requiring the
+  # plan-generator to think of both data chunks
+  # octave code: conj(fft((0:4).**2)') and conj(fft((5+(0:4)).**2)')
+  my $x5 = sequence(10)**2;
+  $x5 = $x5->reshape(5,2)->float;
+
+  my $fx5_ref = pdl( [ [30.0000, + 0.0000],
+                       [-5.2639, +17.2048],
+                       [-9.7361, + 4.0615],
+                       [-9.7361, - 4.0615],
+                       [-5.2639, -17.2048] ],
+                     [ [255.000, + 0.000],
+                       [-30.264, +51.614],
+                       [-34.736, +12.184],
+                       [-34.736, -12.184],
+                       [-30.264, -51.614] ] );
+
+  my $fx5 = rfft1($x5);
+  ok_should_make_plan( all( approx( $fx5, $fx5_ref->slice(':,0:2'), approx_eps_single) ),
+                       "rfft threaded single precision, odd number. May need 2 plans" );
 }
 
 # real fft 2D checks
