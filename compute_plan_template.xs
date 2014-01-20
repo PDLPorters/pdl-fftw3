@@ -101,10 +101,10 @@ CODE:
 {
   int alignment;
 
-  alignment = ( (UVTYPE)in->data % (UVTYPE)16 == 0 ) ? 16 :
-              ( (UVTYPE)in->data % (UVTYPE) 8 == 0 ) ?  8 :
-              ( (UVTYPE)in->data % (UVTYPE) 4 == 0 ) ?  4 :
-              ( (UVTYPE)in->data % (UVTYPE) 2 == 0 ) ?  2 : 1;
+  alignment = ( (unsigned long)in->data % (unsigned long)16 == 0 ) ? 16 :
+              ( (unsigned long)in->data % (unsigned long) 8 == 0 ) ?  8 :
+              ( (unsigned long)in->data % (unsigned long) 4 == 0 ) ?  4 :
+              ( (unsigned long)in->data % (unsigned long) 2 == 0 ) ?  2 : 1;
 
   RETVAL = alignment;
 }
