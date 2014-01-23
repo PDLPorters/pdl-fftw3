@@ -27,7 +27,7 @@ use Test::More;
 
 BEGIN
 {
-  plan tests => 176;
+  plan tests => 178;
   use_ok( 'PDL::FFTW3' );
 }
 
@@ -497,12 +497,21 @@ my $Nplans = 0;
                        "rfft basic test - backward - 7long" );
 
 
-  # 2 1d threaded real ffts with odd size, single-precision. Each of the
-  # threaded data-sets can have different alignment, requiring the
-  # plan-generator to think of both data chunks
-  # octave code: conj(fft((0:4).**2)') and conj(fft((5+(0:4)).**2)')
-  my $x5 = sequence(10)**2;
-  $x5 = $x5->reshape(5,2)->float;
+  # Currently a single plan is made for ALL the thread slices. These tests are
+  # meant to exercise cases where this is a bad assumption. I.e. where some
+  # slices have different alignment than others. For some reason I'm not seeing
+  # these tests trigger any failures, so I'm not adding any plan-per-slice
+  # logic. I'm leaving these tests here so that if error DO show up, we'll know
+  # about them.
+  #
+  # I have two 1d threaded real ffts with odd size. I do this both with
+  # single-precision and with double-precision
+  #
+  # octave code:
+  # conj(fft((0:4).**2)') and conj(fft((5+(0:4)).**2)')
+  my $x5_double = sequence(10)**2;
+  $x5_double = $x5_double->reshape(5,2);
+  my $x5_single = $x5_double->float;
 
   my $fx5_ref = pdl( [ [30.0000, + 0.0000],
                        [-5.2639, +17.2048],
@@ -515,8 +524,12 @@ my $Nplans = 0;
                        [-34.736, -12.184],
                        [-30.264, -51.614] ] );
 
-  my $fx5 = rfft1($x5);
-  ok_should_make_plan( all( approx( $fx5, $fx5_ref->slice(':,0:2'), approx_eps_single) ),
+  my $fx5_double = rfft1($x5_double);
+  ok_should_make_plan( all( approx( $fx5_double, $fx5_ref->slice(':,0:2'), approx_eps_double) ),
+                       "rfft threaded double precision, odd number. May need 2 plans" );
+
+  my $fx5_single = rfft1($x5_single);
+  ok_should_make_plan( all( approx( $fx5_single, $fx5_ref->slice(':,0:2'), approx_eps_single) ),
                        "rfft threaded single precision, odd number. May need 2 plans" );
 }
 
