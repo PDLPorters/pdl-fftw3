@@ -12,7 +12,7 @@ my $maxrank = 10;
 
 our $VERSION = '0.02.2_01';  # _01 for CPAN developers release
 
-pp_addpm( {At => 'Top'}, scalar `cat README.pod` );
+pp_addpm( {At => 'Top'}, slurp('README.pod') );
 
 pp_addhdr( '
 #include <fftw3.h>
@@ -34,8 +34,8 @@ for my $rank (1..$maxrank)
 }
 pp_export_nothing();
 
-pp_addxs('', `cat compute_plan_template.xs`);
-pp_addpm( {At => 'Middle'}, scalar `cat FFTW3_header_include.pm` );
+pp_addxs('', slurp('compute_plan_template.xs'));
+pp_addpm( {At => 'Middle'}, slurp('FFTW3_header_include.pm') );
 
 
 for my $rank (1..$maxrank)
@@ -124,12 +124,10 @@ sub generateDefinitions
   unshift @dims, 'n0=2';
   my $dims_string = join(',', @dims);
 
-  my $code =  `cat template_complex.c`;
-
   my %pp_def = ( HandleBad    => 0,
                  Pars         => "in($dims_string); [o]out($dims_string);",
                  GenericTypes => [F,D],
-                 Code         => $code,
+                 Code         => slurp('template_complex.c'),
                  OtherPars    => 'IV plan', # comes not from the user, but
                                             # from the pre-fft code
 
@@ -152,7 +150,7 @@ sub generateDefinitions
   my $dims_real_string    = join(',', @dims_real);
   my $dims_complex_string = join(',', @dims_complex);
 
-  my $code_real          =  `cat template_real.c`;
+  my $code_real          =  slurp('template_real.c');
   $code_real             =~ s/RANK/$rank/ge;
   my $code_real_forward  =  $code_real;
   my $code_real_backward =  $code_real;
@@ -189,4 +187,15 @@ EOF
   $pp_def{Pars} = "complex($dims_complex_string); [o]real($dims_real_string);";
   $pp_def{Code} = $code_real_backward;
   pp_def( "__irfft$rank", %pp_def );
+}
+
+sub slurp
+{
+  my $filename = shift;
+  open FD, '<', $filename or die "Couldn't open '$filename' for rading";
+
+  local $/ = undef;
+  my $contents = <FD>;
+  close FD;
+  return $contents;
 }
