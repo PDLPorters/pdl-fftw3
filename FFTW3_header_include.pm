@@ -2,6 +2,7 @@
 
 
 use PDL::Types;
+use List::Util 'reduce';
 
 # when I compute an FFTW plan, it goes here
 my %existingPlans;
@@ -391,14 +392,30 @@ EOF
       # we're given an output, and this is the dimensionality
       @dims = $out->dims;
     }
-    splice @dims, $rank;
+
+    my $Nslices = reduce {$a*$b} splice(@dims, $rank);
+    $Nslices = 1 unless defined $Nslices;
 
     my $do_double_precision = $in->get_datatype == $PDL_F ? 0 : 1;
     $_last_do_double_precision = $do_double_precision;
 
     my $do_inplace = is_same_data( $in, $out );
-    my $in_alignment = get_data_alignment( $in );
-    my $out_alignment = get_data_alignment( $out );
+
+    # I compute a single plan for the whole set of thread slices. I make a
+    # worst-case plan, so I find the worst-aligned thread slice and plan off of
+    # it. So if $Nslices>1 then the worst-case alignment is the worse of (1st,
+    # 2nd) slices
+    my $in_alignment  = get_data_alignment_pdl( $in );
+    my $out_alignment = get_data_alignment_pdl( $out );
+    my $stride_bytes  = ($do_double_precision ? 8 : 4) * reduce {$a*$b} @dims;
+    if( $Nslices > 1 )
+    {
+      my $in_alignment_2nd  = get_data_alignment_int($in_alignment  + $stride_bytes);
+      my $out_alignment_2nd = get_data_alignment_int($out_alignment + $stride_bytes);
+      $in_alignment         = $in_alignment_2nd  if $in_alignment_2nd  < $in_alignment;
+      $out_alignment        = $out_alignment_2nd if $out_alignment_2nd < $out_alignment;
+    }
+
     my $planID = join('_',
                       $thisfunction,
                       $do_double_precision,
@@ -408,7 +425,8 @@ EOF
                       @dims);
     if ( !exists $existingPlans{$planID} )
     {
-      $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft, $do_inverse_fft, $in, $out );
+      $existingPlans{$planID} = compute_plan( \@dims, $do_double_precision, $is_real_fft, $do_inverse_fft,
+                                              $in, $out, $in_alignment, $out_alignment );
       $_Nplans++;
     }
 

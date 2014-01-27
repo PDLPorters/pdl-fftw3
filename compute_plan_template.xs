@@ -1,13 +1,15 @@
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
 IV
-compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in_pdl, out_pdl )
+compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in_pdl, out_pdl, in_alignment, out_alignment )
   SV*  dims_ref
   bool do_double_precision
   bool is_real_fft
   bool do_inverse_fft
   pdl* in_pdl
   pdl* out_pdl
+  int  in_alignment
+  int  out_alignment
 CODE:
 {
   // Given input and output matrices, this function computes the FFTW plan
@@ -21,8 +23,14 @@ CODE:
   for( int i=0; i<rank; i++)
     dims_row_first[i] = SvIV( *av_fetch( dims_av, rank-i-1, 0) );
 
-  void* in_data = in_pdl->data;
-  void* out_data = out_pdl->data;
+  // I apply the requested mis-alignment. This comes from later thread slices
+  UVTYPE in_data = (UVTYPE)in_pdl->data;
+  if( in_alignment < 16 )
+    in_data |= in_alignment;
+
+  UVTYPE out_data = (UVTYPE)out_pdl->data;
+  if( out_alignment < 16 )
+    out_data |= out_alignment;
 
   void* plan;
   if( !is_real_fft )
@@ -94,19 +102,29 @@ OUTPUT:
  RETVAL
 
 
+#define _get_data_alignment_int( x )            \
+ ( x %  16 == 0 ) ? 16 :                        \
+ ( x %  8  == 0 ) ?  8 :                        \
+ ( x %  4  == 0 ) ?  4 :                        \
+ ( x %  2  == 0 ) ?  2 : 1;
+
 int
-get_data_alignment( in )
+get_data_alignment_int( x )
+  UV x
+CODE:
+{
+  RETVAL = _get_data_alignment_int( x );
+}
+OUTPUT:
+ RETVAL
+
+
+int
+get_data_alignment_pdl( in )
   pdl* in
 CODE:
 {
-  int alignment;
-
-  alignment = ( PTR2UV(in->data) % (UVTYPE)16 == 0 ) ? 16 :
-              ( PTR2UV(in->data) % (UVTYPE) 8 == 0 ) ?  8 :
-              ( PTR2UV(in->data) % (UVTYPE) 4 == 0 ) ?  4 :
-              ( PTR2UV(in->data) % (UVTYPE) 2 == 0 ) ?  2 : 1;
-
-  RETVAL = alignment;
+  RETVAL = _get_data_alignment_int( PTR2UV(in->data) );
 }
 OUTPUT:
  RETVAL
