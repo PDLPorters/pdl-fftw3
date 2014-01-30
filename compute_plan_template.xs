@@ -24,11 +24,11 @@ CODE:
     dims_row_first[i] = SvIV( *av_fetch( dims_av, rank-i-1, 0) );
 
   // I apply the requested mis-alignment. This comes from later thread slices
-  UVTYPE in_data = (UVTYPE)in_pdl->data;
+  UVTYPE in_data = PTR2UV(in_pdl->data);
   if( in_alignment < 16 )
     in_data |= in_alignment;
 
-  UVTYPE out_data = (UVTYPE)out_pdl->data;
+  UVTYPE out_data = PTR2UV(out_pdl->data);
   if( out_alignment < 16 )
     out_data |= out_alignment;
 
@@ -41,12 +41,12 @@ CODE:
     if( !do_double_precision )
       plan =
         fftwf_plan_dft( rank, dims_row_first,
-                        (fftwf_complex*)in_data, (fftwf_complex*)out_data,
+                        NUM2PTR(fftwf_complex*, in_data), NUM2PTR(fftwf_complex*, out_data),
                         direction, FFTW_ESTIMATE);
     else
       plan =
         fftw_plan_dft( rank, dims_row_first,
-                       (fftw_complex*)in_data, (fftw_complex*)out_data,
+                       NUM2PTR(fftw_complex*, in_data), NUM2PTR(fftw_complex*, out_data),
                        direction, FFTW_ESTIMATE);
   }
   else
@@ -57,12 +57,12 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftwf_plan_dft_r2c( rank, dims_row_first,
-                              (float*)in_data, (fftwf_complex*)out_data,
+                              NUM2PTR(float*, in_data), NUM2PTR(fftwf_complex*, out_data),
                               FFTW_ESTIMATE );
       else
         plan =
           fftwf_plan_dft_c2r( rank, dims_row_first,
-                              (fftwf_complex*)in_data, (float*)out_data,
+                              NUM2PTR(fftwf_complex*, in_data), NUM2PTR(float*, out_data),
                               FFTW_ESTIMATE );
     }
     else
@@ -70,12 +70,12 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftw_plan_dft_r2c( rank, dims_row_first,
-                             (double*)in_data, (fftw_complex*)out_data,
+                             NUM2PTR(double*, in_data), NUM2PTR(fftw_complex*, out_data),
                              FFTW_ESTIMATE );
       else
         plan =
           fftw_plan_dft_c2r( rank, dims_row_first,
-                             (fftw_complex*)in_data, (double*)out_data,
+                             NUM2PTR(fftw_complex*, in_data), NUM2PTR(double*, out_data),
                              FFTW_ESTIMATE );
     }
   }
