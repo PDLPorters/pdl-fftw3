@@ -2,11 +2,6 @@
 
 PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
 
-=head1 DESCRIPTION
-
-This is a PDL binding to version 3 of the FFTW library. Supported are complex
-<-> complex and real <-> complex FFTs.
-
 =head1 SYNOPSIS
 
  use PDL;
@@ -78,6 +73,22 @@ This is a PDL binding to version 3 of the FFTW library. Supported are complex
  =====> 30
 
 =head1 DESCRIPTION
+
+This is a PDL binding to version 3 of the FFTW library. Supported are complex
+<-> complex and real <-> complex FFTs.
+
+=head2 NB to install
+
+  wget http://www.fftw.org/fftw-3.3.4.tar.gz
+  tar xvf fftw-3.3.4.tar.gz
+  cd fftw-3.3.4/
+  ./configure --prefix=/usr --enable-threads --enable-float --enable-shared --with-pic
+  make all install install-pkgconfigDATA
+  make clean
+  ./configure --prefix=/usr --enable-threads --enable-shared --with-pic
+  make all install install-pkgconfigDATA
+
+This will give you both fftw3f (first chunk) and fftw3 (second).
 
 =head2 Supported operations
 
