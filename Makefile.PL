@@ -13,7 +13,6 @@ my $libs;
 my $version = parseVersion( 'FFTW3.pd');
 
 if( eval "require Alien::FFTW3" ) {
-
     ## Ensure at least version 3.3; die if we can't get it.
     Alien::FFTW3->VERSION(3.3);
     
@@ -25,13 +24,13 @@ if( eval "require Alien::FFTW3" ) {
     $cflags = Alien::FFTW3->cflags;
     $libs   = Alien::FFTW3->libs;
 } else {
-    if( $version =~ /_/ )
-    {
-      die
-        "Alien::FFTW3 not found, but it is required for dev snapshots, such as this.\n" .
-        "Please use Alien::FFTW3 or use a release of this module.\n" .
-        "Or remove this check from the source.";
-    }
+#    if( $version =~ /_/ ) {
+#        die <<EOF;
+#Alien::FFTW3 not found, but it is required for dev snapshots, such as this.
+#Please use Alien::FFTW3 or use a release of this module.
+#Or remove this check from the source.
+#EOF
+#    }
 
     printf "Alien::FFTW3 not found.  Using pkg-config instead...\n";
 
@@ -50,8 +49,9 @@ if( eval "require Alien::FFTW3" ) {
                     'fftw3f >= 3.3', 'fftw3 >= 3.3'],
                    \undef,
                    \$libs, \$err ) or die "Couldn't get the fftw libs: '$err'";
-}
 
+    chomp($cflags, $libs);
+}
 
 my @package = qw(FFTW3.pd FFTW3 PDL::FFTW3);
 my %descriptor = pdlpp_stdargs(\@package);
@@ -73,10 +73,11 @@ $descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_r
 # This Alien::FFTW3 requirement is actually optional. pkg-config is used if this
 # isn't available
 $descriptor{PREREQ_PM} = {'PDL'=>2.001};
-$descriptor{CONFIGURE_REQUIRES} = {'PDL::Core::Dev' =>0,
-                                   'IPC::Run'       =>0,
-                                   'Alien::FFTW3'   =>0,
-                                };
+$descriptor{CONFIGURE_REQUIRES} = {
+  'PDL::Core::Dev' =>0,
+  'IPC::Run'       =>0,
+  'Alien::FFTW3'   =>0,
+};
 $descriptor{BUILD_REQUIRES} = {'PDL::PP'=>0};
 $descriptor{NO_MYMETA} = 0;
 
@@ -84,24 +85,23 @@ $descriptor{NAME}   = "PDL::FFTW3";
 $descriptor{AUTHOR} = "Dima Kogan <dima\@secretsauce.net>, Craig DeForest <deforest\@boulder.swri.edu>";
 $descriptor{ABSTRACT} = "PDL interface to the Fastest Fourier Transform in the West";
 
-$descriptor{META_MERGE} =
-{ resources => {
-                homepage => 'http://github.com/dkogan/PDL-FFTW3',
-                repository => 'git://github.com/dkogan/PDL-FFTW3.git',
-                bugtracker => 'http://github.com/dkogan/PDL-FFTW3/issues'
-               },
+$descriptor{META_MERGE} = {
+  resources => {
+    homepage => 'http://github.com/PDLPorters/pdl-fftw3',
+    repository => 'git://github.com/PDLPorters/pdl-fftw3.git',
+    bugtracker => 'http://github.com/PDLPorters/pdl-fftw3/issues',
+  },
   provides => {
-               'PDL::FFTW3' =>
-               { 'file' => 'FFTW3.pd',
-                 'version' => $descriptor{VERSION}
-               }
-              }
+    'PDL::FFTW3' => {
+      file => 'FFTW3.pd',
+      version => $descriptor{VERSION},
+    }
+  }
 };
 
 WriteMakefile( %descriptor );
 
-sub MY::postamble
-{
+sub MY::postamble {
   return <<'FOO' . pdlpp_postamble(\@package);
 
 install ::
@@ -110,15 +110,13 @@ install ::
 FOO
 }
 
-sub parseVersion
-{
+sub parseVersion {
   my $file = shift;
 
   my $infd;
   open $infd, '<', $file or die "Error: couldn't open file '$file' for version parsing";
 
-  while(<$infd>)
-  {
+  while(<$infd>) {
     return $1 if /our \$VERSION = '([0-9\.a-zA-Z_]+)'/;
   }
 
