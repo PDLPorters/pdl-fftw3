@@ -1,0 +1,11 @@
+#!include_default
+^patches/$
+^PDL-FFTW3-.*\.tar\.gz$
+\.*~$
+FFTW3\.bs$
+^MANIFEST\.SKIP$
+^\.travis\.yml$
+^FFTW3\.c$
+^FFTW3\.o$
+^FFTW3\.pm$
+^FFTW3\.xs$
