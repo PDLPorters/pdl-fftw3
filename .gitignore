@@ -4,3 +4,5 @@ PDL-FFTW3-*.tar.gz
 *.o
 *.c
 *.bs
+FFTW3.pm
+FFTW3.xs
