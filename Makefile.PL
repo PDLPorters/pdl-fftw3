@@ -72,7 +72,7 @@ $descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_r
 
 # This Alien::FFTW3 requirement is actually optional. pkg-config is used if this
 # isn't available
-$descriptor{PREREQ_PM} = {'PDL'=>2.001};
+$descriptor{PREREQ_PM} = {'PDL::Core'=>2.001};
 $descriptor{CONFIGURE_REQUIRES} = {
   'PDL::Core::Dev' =>0,
   'IPC::Run'       =>0,
