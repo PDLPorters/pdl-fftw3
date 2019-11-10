@@ -1,4 +1,8 @@
-PDL::FFTW3 Changes:
+0.05: 2019-11-10
+- update metadata to point at GitHub
+
+0.04: 2015-06-17
+- updated to dep on PDL::Core
 
 0.03: 16 Jun 2015
     - Moved into own repo and CPAN distro
