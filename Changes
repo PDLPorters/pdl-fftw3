@@ -1,3 +1,5 @@
+- change param names from "complex" which clashes with complex.h
+
 0.06: 2019-12-09
 - add licence info - thanks @manwar
 
