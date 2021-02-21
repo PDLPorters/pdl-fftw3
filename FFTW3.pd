@@ -1,3 +1,9 @@
+=head1 NAME
+
+PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
+
+=cut
+
 # -*- cperl -*-
 
 ##### General layout of the module #####
