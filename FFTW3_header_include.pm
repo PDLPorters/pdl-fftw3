@@ -174,148 +174,143 @@ EOF
   { matchDimensions_complex($thisfunction, $rank, $in, $out); }
   else
   { matchDimensions_real($thisfunction, $rank, $do_inverse_fft, $in, $out); }
+}
 
+sub validateArgumentDimensions_complex
+{
+  my ( $rank, $thisfunction, $arg ) = @_;
 
-
-
-
-
-  sub validateArgumentDimensions_complex
-  {
-    my ( $rank, $thisfunction, $arg ) = @_;
-
-    # complex FFT. Identically-sized inputs/outputs
-    barf <<EOF if $arg->dim(0) != 2;
+  # complex FFT. Identically-sized inputs/outputs
+  barf <<EOF if $arg->dim(0) != 2;
 $thisfunction must have dim(0) == 2 for the inputs and outputs.
 This is the (real,imag) dimension. Giving up.
 EOF
 
-    barf <<EOF if $arg->ndims-1 < $rank;
+  barf <<EOF if $arg->ndims-1 < $rank;
 Tried to compute a $rank-dimensional FFT, but an array has fewer than $rank dimensions.
 Giving up.
 EOF
-  }
+}
 
-  sub validateArgumentDimensions_real
+sub validateArgumentDimensions_real
+{
+  my ( $rank, $do_inverse_fft, $thisfunction, $iarg, $arg ) = @_;
+
+  # real FFT. Forward transform takes in real and spits out complex;
+  # backward transform does the reverse
+  if ( $arg->dim(0) != 2 )
   {
-    my ( $rank, $do_inverse_fft, $thisfunction, $iarg, $arg ) = @_;
-
-    # real FFT. Forward transform takes in real and spits out complex;
-    # backward transform does the reverse
-    if ( $arg->dim(0) != 2 )
+    if ( !$do_inverse_fft && $iarg == 1 )
     {
-      if ( !$do_inverse_fft && $iarg == 1 )
-      {
-        barf <<EOF;
+      barf <<EOF;
 $thisfunction produces complex output, so \$output->dim(0) == 2 should be true,
 but it's not. This is the (real,imag) dimension. Giving up.
 EOF
-      }
-      elsif ( $do_inverse_fft && $iarg == 0 )
-      {
-        barf <<EOF;
+    }
+    elsif ( $do_inverse_fft && $iarg == 0 )
+    {
+      barf <<EOF;
 $thisfunction takes complex input, so \$input->dim(0) == 2 should be true, but
 it's not. This is the (real,imag) dimension. Giving up.
 EOF
-      }
     }
+  }
 
-    if( $iarg == 0 )
+  if( $iarg == 0 )
+  {
+    # The input needs at least $rank dimensions. If this is a backward
+    # transform, the input is complex, so it needs an extra dimension
+    my $min_dimensionality = $rank;
+    $min_dimensionality++ if $do_inverse_fft;
+    if ( $arg->ndims < $min_dimensionality )
     {
-      # The input needs at least $rank dimensions. If this is a backward
-      # transform, the input is complex, so it needs an extra dimension
-      my $min_dimensionality = $rank;
-      $min_dimensionality++ if $do_inverse_fft;
-      if ( $arg->ndims < $min_dimensionality )
-      {
-        barf <<EOF;
+      barf <<EOF;
 $thisfunction: The input needs at least $min_dimensionality dimensions, but
 it has fewer. Giving up.
 EOF
-      }
     }
-    else
+  }
+  else
+  {
+    # The output needs at least $rank dimensions. If this is a forward
+    # transform, the output is complex, so it needs an extra dimension
+    my $min_dimensionality = $rank;
+    $min_dimensionality++ if !$do_inverse_fft;
+    if ( $arg->ndims < $min_dimensionality )
     {
-      # The output needs at least $rank dimensions. If this is a forward
-      # transform, the output is complex, so it needs an extra dimension
-      my $min_dimensionality = $rank;
-      $min_dimensionality++ if !$do_inverse_fft;
-      if ( $arg->ndims < $min_dimensionality )
-      {
-        barf <<EOF;
+      barf <<EOF;
 $thisfunction: The output needs at least $min_dimensionality dimensions, but
 it has fewer. Giving up.
 EOF
-      }
     }
   }
+}
 
-  sub matchDimensions_complex
+sub matchDimensions_complex
+{
+  my ($thisfunction, $rank, $in, $out) = @_;
+
+  for my $idim(0..$rank)
   {
-    my ($thisfunction, $rank, $in, $out) = @_;
-
-    for my $idim(0..$rank)
+    if( $in->dim($idim) != $out->dim($idim) )
     {
-      if( $in->dim($idim) != $out->dim($idim) )
-      {
-        barf <<EOF;
+      barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
 EOF
-      }
     }
   }
+}
 
-  sub matchDimensions_real
+sub matchDimensions_real
+{
+  my ($thisfunction, $rank, $do_inverse_fft, $in, $out) = @_;
+
+  if( !$do_inverse_fft )
   {
-    my ($thisfunction, $rank, $do_inverse_fft, $in, $out) = @_;
+    # Forward FFT. The input is real, the output is complex. $output->dim(0)
+    # == 2, since that's the (real, imag) dimension. Furthermore,
+    # $output->dim(1) should be int($input->dim(0)/2) + 1 (Section 2.4 of
+    # the FFTW3 documentation)
 
-    if( !$do_inverse_fft )
-    {
-      # Forward FFT. The input is real, the output is complex. $output->dim(0)
-      # == 2, since that's the (real, imag) dimension. Furthermore,
-      # $output->dim(1) should be int($input->dim(0)/2) + 1 (Section 2.4 of
-      # the FFTW3 documentation)
-
-      barf <<EOF if int($in->dim(0)/2) + 1 != $out->dim(1);
+    barf <<EOF if int($in->dim(0)/2) + 1 != $out->dim(1);
 $thisfunction: mismatched first dimension:
 \$output->dim(1) == int(\$input->dim(0)/2) + 1 wasn't true.
 Giving up.
 EOF
 
-      for my $idim (1..$rank-1)
+    for my $idim (1..$rank-1)
+    {
+      if ( $in->dim($idim) != $out->dim($idim + 1) )
       {
-        if ( $in->dim($idim) != $out->dim($idim + 1) )
-        {
-          barf <<EOF;
+        barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
 EOF
-        }
       }
     }
-    else
-    {
-      # Backward FFT. The input is complex, the output is real. $input->dim(0)
-      # == 2, since that's the (real, imag) dimension. Furthermore,
-      # $input->dim(1) should be int($output->dim(0)/2) + 1 (Section 2.4 of
-      # the FFTW3 documentation)
+  }
+  else
+  {
+    # Backward FFT. The input is complex, the output is real. $input->dim(0)
+    # == 2, since that's the (real, imag) dimension. Furthermore,
+    # $input->dim(1) should be int($output->dim(0)/2) + 1 (Section 2.4 of
+    # the FFTW3 documentation)
 
-      barf <<EOF if int($out->dim(0)/2) + 1 != $in->dim(1);
+    barf <<EOF if int($out->dim(0)/2) + 1 != $in->dim(1);
 $thisfunction: mismatched first dimension:
 \$input->dim(1) == int(\$output->dim(0)/2) + 1 wasn't true.
 Giving up.
 EOF
 
-      for my $idim (1..$rank-1)
+    for my $idim (1..$rank-1)
+    {
+      if ( $out->dim($idim) != $in->dim($idim + 1) )
       {
-        if ( $out->dim($idim) != $in->dim($idim + 1) )
-        {
-          barf <<EOF;
+        barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
 EOF
-        }
       }
     }
   }
@@ -355,13 +350,12 @@ EOF
     forceType( $in,  $targetType );
     forceType( $out, $targetType );
   }
+}
 
-
-  sub forceType
-  {
-    my ($x, $type) = @_;
-    $$x = convert( $$x, $type ) unless $$x->type == $type;
-  }
+sub forceType
+{
+  my ($x, $type) = @_;
+  $$x = convert( $$x, $type ) unless $$x->type == $type;
 }
 
 sub getPlan
