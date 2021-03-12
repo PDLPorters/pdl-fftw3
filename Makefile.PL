@@ -15,24 +15,14 @@ my $version = parseVersion( 'FFTW3.pd');
 if( eval "require Alien::FFTW3" ) {
     ## Ensure at least version 3.3; die if we can't get it.
     Alien::FFTW3->VERSION(3.3);
-    
     my $p = Alien::FFTW3->precision;
     unless($p->{'d'} and $p->{'f'}) {
 	die "PDL::FFTW3 - needs both double-precision and single-precision fftw3 libraries\n\t(libfftw3 and libfftw3f). Alien::FFTW3 found only ".(join(",",keys %$p))."\n";
     }
-    
     $cflags = Alien::FFTW3->cflags;
     $libs   = Alien::FFTW3->libs;
 } else {
-#    if( $version =~ /_/ ) {
-#        die <<EOF;
-#Alien::FFTW3 not found, but it is required for dev snapshots, such as this.
-#Please use Alien::FFTW3 or use a release of this module.
-#Or remove this check from the source.
-#EOF
-#    }
-
-    printf "Alien::FFTW3 not found.  Using pkg-config instead...\n";
+    print "Alien::FFTW3 not found.  Using pkg-config instead...\n";
 
     require IPC::Run;
     $cflags = '';
