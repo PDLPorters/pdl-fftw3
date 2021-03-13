@@ -73,7 +73,7 @@
 \.*~$
 FFTW3\.bs$
 ^MANIFEST\.SKIP$
-^\.travis\.yml$
+^\.github/
 ^FFTW3\.c$
 ^FFTW3\.o$
 ^FFTW3\.pm$
