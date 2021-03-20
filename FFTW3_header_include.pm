@@ -144,7 +144,7 @@ EOF
     my $type = ref $arg;
     $type = 'scalar' unless defined $arg;
 
-    barf <<EOF unless ref $arg && ref $arg eq 'PDL';
+    barf <<EOF unless ref $arg && ($type eq 'PDL' or (!$is_real_fft and $type eq 'PDL::Complex'));
 $thisfunction arguments must be of type 'PDL'. Instead I got an arg of
 type '$type'. Giving up.
 EOF

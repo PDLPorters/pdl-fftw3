@@ -6,6 +6,7 @@ use Test::More;
 use PDL::LiteF;
 use PDL::Types;
 use PDL::FFTW3;
+use PDL::Complex;
 
 # Please be careful about rearranging these tests, since they depend on the
 # global FFTW plan cache, and thus order can matter.
@@ -54,6 +55,9 @@ my $Nplans = 0;
 
   ok_should_make_plan( all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
                       "Basic 1D complex FFT - single precision" );
+
+  ok_should_make_plan( all( approx( fft1(cplx $x), $Xref, approx_eps_double) ),
+                      "Basic 1D complex FFT with PDL::Complex" );
 
   ok_should_make_plan( all( approx( ifft1(fft1($x)), $x , approx_eps_double) ),
                       "Basic 1D complex FFT - inverse(forward) should be the same (normalized)" );

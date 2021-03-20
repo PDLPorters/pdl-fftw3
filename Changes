@@ -1,3 +1,5 @@
+- allow complex inputs that are PDL::Complex
+
 0.07 2021-02-21
 - change param names from "complex" which clashes with complex.h
 
