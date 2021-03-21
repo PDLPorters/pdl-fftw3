@@ -21,6 +21,9 @@ pp_setversion($VERSION);
 
 pp_addpm( {At => 'Top'}, slurp('README.pod') . <<'EOF' );
 
+use strict;
+use warnings;
+
 EOF
 
 pp_addhdr( '
@@ -45,7 +48,6 @@ pp_export_nothing();
 
 pp_addxs('', slurp('compute_plan_template.xs'));
 pp_addpm( {At => 'Middle'}, slurp('FFTW3_header_include.pm') );
-
 
 for my $rank (1..$maxrank)
 {
@@ -74,7 +76,7 @@ EOF
 ##########
 # Generate the fftn case.  This should probably be done more prettily; for now it's just 
 # a springboard that jumps into __fft_internal.
-pp_addpm ( {At=> 'Bot'}, <<'EOF' );
+pp_addpm ( {At=> 'Bot'}, sprintf <<'EOF', $maxrank );
 sub _rank_springboard {
   my ($name, $source, $rank, @rest) = @_;
   my $inverse = ($name =~ m/^i/);
@@ -85,7 +87,7 @@ sub _rank_springboard {
   }
   $rank = 0+$rank;  # force numeric context
   unless($rank>=1 ) {
-    die "${name}n: second argument (rank) must be between 1 and $maxrank";
+    die "${name}n: second argument (rank) must be between 1 and %d";
   }
 
   my $active_lo = ($real ? 0 : 1);
