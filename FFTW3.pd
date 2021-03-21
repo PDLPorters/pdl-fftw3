@@ -17,8 +17,11 @@ PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
 my $maxrank = 10;
 
 our $VERSION = '0.08';
+pp_setversion($VERSION);
 
-pp_addpm( {At => 'Top'}, slurp('README.pod') );
+pp_addpm( {At => 'Top'}, slurp('README.pod') . <<'EOF' );
+
+EOF
 
 pp_addhdr( '
 #include <fftw3.h>

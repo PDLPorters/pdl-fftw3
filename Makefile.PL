@@ -10,7 +10,6 @@ use PDL::Core::Dev;
 # a Debian package won't have to include Alien::FFTW3.
 my $cflags;
 my $libs;
-my $version = parseVersion( 'FFTW3.pd');
 
 if( eval "require Alien::FFTW3" ) {
     ## Ensure at least version 3.3; die if we can't get it.
@@ -46,7 +45,7 @@ if( eval "require Alien::FFTW3" ) {
 my @package = qw(FFTW3.pd FFTW3 PDL::FFTW3);
 my %descriptor = pdlpp_stdargs(\@package);
 
-$descriptor{VERSION}   = $version;
+$descriptor{VERSION_FROM} = 'FFTW3.pd';
 $descriptor{OPTIMIZE}  = ($Config{ccname} =~ m/gcc/) ? '-O2' : $Config{optimize};
 $descriptor{CCFLAGS} .= ( ($Config{ccname} =~ m/gcc/) ? '--std=gnu99 ' : '' ) . $Config{ccflags};
 
@@ -109,17 +108,4 @@ install ::
 	@echo "Updating PDL documentation database...";
 	@$(PERL) -e "exit if $$ENV{DESTDIR}; use PDL::Doc; eval { PDL::Doc::add_module(q{PDL::FFTW3}); }; ";
 FOO
-}
-
-sub parseVersion {
-  my $file = shift;
-
-  my $infd;
-  open $infd, '<', $file or die "Error: couldn't open file '$file' for version parsing";
-
-  while(<$infd>) {
-    return $1 if /our \$VERSION = '([0-9\.a-zA-Z_]+)'/;
-  }
-
-  die "Error: couldn't parse version from '$file'";
 }

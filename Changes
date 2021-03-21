@@ -1,3 +1,5 @@
+- fix setting VERSION so visible to module-loaders
+
 0.08 2021-03-20
 - allow complex inputs that are PDL::Complex
 
