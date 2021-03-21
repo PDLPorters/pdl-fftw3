@@ -57,7 +57,7 @@ for my $rank (1..$maxrank)
   my $shapestr = sprintf(q{$a->shape->slice('1:%d')->prodover},$rank);
   my $rshapestr = sprintf(q{$a->shape->slice('0:%d')->prodover},$rank-1);
 
-  pp_addpm({At => 'Bot'}, <<EOF );
+  pp_addpm({At => 'Bot'}, pp_line_numbers(__LINE__, <<EOF));
 sub fft$rank { __fft_internal( "fft$rank",\@_ ); }
 *PDL::fft$rank = \\&fft$rank;
 
@@ -78,7 +78,7 @@ EOF
 ##########
 # Generate the fftn case.  This should probably be done more prettily; for now it's just 
 # a springboard that jumps into __fft_internal.
-pp_addpm ( {At=> 'Bot'}, sprintf <<'EOF', $maxrank );
+pp_addpm({At=> 'Bot'}, pp_line_numbers(__LINE__, sprintf <<'EOF', $maxrank));
 sub _rank_springboard {
   my ($name, $source, $rank, @rest) = @_;
   my $inverse = ($name =~ m/^i/);
@@ -210,5 +210,5 @@ sub slurp
   local $/ = undef;
   my $contents = <FD>;
   close FD;
-  return $contents;
+  return qq{#line 0 "$filename"\n\n} . $contents;
 }
