@@ -84,12 +84,6 @@ $descriptor{META_MERGE} = {
     type => 'git',
     x_IRC => 'irc://irc.perl.org/#pdl',
   },
-  provides => {
-    'PDL::FFTW3' => {
-      file => 'FFTW3.pd',
-      version => $descriptor{VERSION},
-    }
-  },
   prereqs => {
     develop => {
       requires => {
