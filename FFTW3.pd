@@ -13,6 +13,9 @@ PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
 # FFTW plan exists (or makes it). Then it calls the THREADED PP function to
 # actually compute the transform
 
+use strict;
+use warnings;
+
 # I generate code for up to 10-dimensional FFTs
 my $maxrank = 10;
 
@@ -51,9 +54,8 @@ pp_addpm( {At => 'Middle'}, slurp('FFTW3_header_include.pm') );
 
 for my $rank (1..$maxrank)
 {
-  my $shapestr,$rshapestr;
-  $shapestr =  sprintf(q{$a->shape->slice('1:%d')->prodover},$rank);
-  $rshapestr = sprintf(q{$a->shape->slice('0:%d')->prodover},$rank-1);
+  my $shapestr = sprintf(q{$a->shape->slice('1:%d')->prodover},$rank);
+  my $rshapestr = sprintf(q{$a->shape->slice('0:%d')->prodover},$rank-1);
 
   pp_addpm({At => 'Bot'}, <<EOF );
 sub fft$rank { __fft_internal( "fft$rank",\@_ ); }
@@ -137,7 +139,7 @@ sub generateDefinitions
 
   my %pp_def = ( HandleBad    => 0,
                  Pars         => "in($dims_string); [o]out($dims_string);",
-                 GenericTypes => [F,D],
+                 GenericTypes => [qw(F D)],
                  Code         => slurp('template_complex.c'),
                  OtherPars    => 'IV plan', # comes not from the user, but
                                             # from the pre-fft code
