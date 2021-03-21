@@ -141,6 +141,10 @@ a single-precision floating point transform (and return data of that type).
 This module expects complex numbers to be stored as a (real,imag) pair in the
 first dimension of a piddle. Thus in a complex piddle C<$x>, it is expected that
 C<$x-E<gt>dim(0) == 2> (this module verifies this before proceeding).
+As of 0.10, it works to pass in a L<PDL::Complex> object, though the
+output will still currently be a similarly-shaped "real" L<PDL>
+object with the initial dimension of 2. This is intended to be changed
+so the output type is the same as the input.
 
 Generally, the sizes of the input and the output must match. This is completely
 true for the complex <-> complex transforms: the output will have the same size

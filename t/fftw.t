@@ -56,7 +56,9 @@ my $Nplans = 0;
   ok_should_make_plan( all( approx( fft1(float $x), float($Xref), approx_eps_single) ),
                       "Basic 1D complex FFT - single precision" );
 
-  ok_should_make_plan( all( approx( fft1(cplx $x), $Xref, approx_eps_double) ),
+  my $x_cplx = cplx $x;
+  my $cplx_result = fft1($x_cplx);
+  ok_should_make_plan( all( approx( $cplx_result, $Xref, approx_eps_double) ),
                       "Basic 1D complex FFT with PDL::Complex" );
 
   ok_should_make_plan( all( approx( ifft1(fft1($x)), $x , approx_eps_double) ),
