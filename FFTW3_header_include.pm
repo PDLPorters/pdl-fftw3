@@ -88,8 +88,8 @@ EOF
   my $internal_function =
     $is_real_fft ?
     ( $do_inverse_fft ? "PDL::__irfft$rank" : "PDL::__rfft$rank") : "PDL::__fft$rank";
-  eval( $internal_function . '( $in, $out, $plan );' );
-  barf "$thisfunction: eval failed calling the internal FFT routine: $@" if $@;
+  eval { no strict 'refs'; $internal_function->( $in, $out, $plan ) };
+  barf $@ if $@;
 
   return $out;
 }
