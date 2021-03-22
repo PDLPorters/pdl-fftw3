@@ -178,68 +178,48 @@ Giving up.
 EOF
 }
 
-sub validateArgumentDimensions_real
-{
+sub validateArgumentDimensions_real {
   my ( $rank, $do_inverse_fft, $thisfunction, $iarg, $arg ) = @_;
 
   # real FFT. Forward transform takes in real and spits out complex;
   # backward transform does the reverse
-  if ( $arg->dim(0) != 2 )
-  {
-    if ( !$do_inverse_fft && $iarg == 1 )
-    {
-      barf <<EOF;
-$thisfunction produces complex output, so \$output->dim(0) == 2 should be true,
+  if ( $arg->dim(0) != 2 ) {
+    my ($verb, $var);
+    if ( !$do_inverse_fft && $iarg == 1 ) {
+      ($verb, $var) = qw(produces output);
+    } elsif ( $do_inverse_fft && $iarg == 0 ) {
+      ($verb, $var) = qw(takes input);
+    }
+    barf <<EOF if $verb;
+$thisfunction $verb complex output, so \$$var->dim(0) == 2 should be true,
 but it's not. This is the (real,imag) dimension. Giving up.
 EOF
-    }
-    elsif ( $do_inverse_fft && $iarg == 0 )
-    {
-      barf <<EOF;
-$thisfunction takes complex input, so \$input->dim(0) == 2 should be true, but
-it's not. This is the (real,imag) dimension. Giving up.
-EOF
-    }
   }
 
-  if( $iarg == 0 )
-  {
+  my ($min_dimensionality, $var) = $rank;
+  if( $iarg == 0 ) {
     # The input needs at least $rank dimensions. If this is a backward
     # transform, the input is complex, so it needs an extra dimension
-    my $min_dimensionality = $rank;
     $min_dimensionality++ if $do_inverse_fft;
-    if ( $arg->ndims < $min_dimensionality )
-    {
-      barf <<EOF;
-$thisfunction: The input needs at least $min_dimensionality dimensions, but
-it has fewer. Giving up.
-EOF
-    }
-  }
-  else
-  {
+    $var = 'input';
+  } else {
     # The output needs at least $rank dimensions. If this is a forward
     # transform, the output is complex, so it needs an extra dimension
-    my $min_dimensionality = $rank;
     $min_dimensionality++ if !$do_inverse_fft;
-    if ( $arg->ndims < $min_dimensionality )
-    {
-      barf <<EOF;
-$thisfunction: The output needs at least $min_dimensionality dimensions, but
+    $var = 'output';
+  }
+  if ( $arg->ndims < $min_dimensionality ) {
+    barf <<EOF;
+$thisfunction: The $var needs at least $min_dimensionality dimensions, but
 it has fewer. Giving up.
 EOF
-    }
   }
 }
 
-sub matchDimensions_complex
-{
+sub matchDimensions_complex {
   my ($thisfunction, $rank, $in, $out) = @_;
-
-  for my $idim(0..$rank)
-  {
-    if( $in->dim($idim) != $out->dim($idim) )
-    {
+  for my $idim (0..$rank) {
+    if ( $in->dim($idim) != $out->dim($idim) ) {
       barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
