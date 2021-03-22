@@ -86,8 +86,9 @@ EOF
 
   # I now have the arguments and the plan. Go!
   my $internal_function =
-    $is_real_fft ?
-    ( $do_inverse_fft ? "PDL::__irfft$rank" : "PDL::__rfft$rank") : "PDL::__fft$rank";
+    !$is_real_fft ? "PDL::__fft$rank" :
+    $do_inverse_fft ? "PDL::__irfft$rank" :
+    "PDL::__rfft$rank";
   eval { no strict 'refs'; $internal_function->( $in, $out, $plan ) };
   barf $@ if $@;
 
