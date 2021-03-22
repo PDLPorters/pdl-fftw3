@@ -74,10 +74,12 @@ EOF
   barf "$thisfunction couldn't make a plan. Giving up\n" unless defined $plan;
 
   # I now have the arguments and the plan. Go!
-  my $internal_function =
-    !$is_real_fft ? "PDL::__fft$rank" :
-    $do_inverse_fft ? "PDL::__irfft$rank" :
-    "PDL::__rfft$rank";
+  my $internal_function = 'PDL::__';
+  $internal_function .=
+    !$is_real_fft ? '' :
+    $do_inverse_fft ? 'ir' :
+    'r';
+  $internal_function .= "fft$rank";
   eval { no strict 'refs'; $internal_function->( $in, $out, $plan ) };
   barf $@ if $@;
 
