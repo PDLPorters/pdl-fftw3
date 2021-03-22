@@ -228,56 +228,31 @@ EOF
   }
 }
 
-sub matchDimensions_real
-{
+sub matchDimensions_real {
   my ($thisfunction, $rank, $do_inverse_fft, $in, $out) = @_;
 
-  if( !$do_inverse_fft )
-  {
+  my ($varname1, $varname2, $var1, $var2);
+  if ( !$do_inverse_fft ) {
     # Forward FFT. The input is real, the output is complex. $output->dim(0)
     # == 2, since that's the (real, imag) dimension. Furthermore,
     # $output->dim(1) should be int($input->dim(0)/2) + 1 (Section 2.4 of
     # the FFTW3 documentation)
-
-    barf <<EOF if int($in->dim(0)/2) + 1 != $out->dim(1);
-$thisfunction: mismatched first dimension:
-\$output->dim(1) == int(\$input->dim(0)/2) + 1 wasn't true.
-Giving up.
-EOF
-
-    for my $idim (1..$rank-1)
-    {
-      if ( $in->dim($idim) != $out->dim($idim + 1) )
-      {
-        barf <<EOF;
-$thisfunction was given input/output matrices of non-matching sizes.
-Giving up.
-EOF
-      }
-    }
+    ($varname1, $varname2, $var1, $var2) = (qw(input output), $in, $out);
+  } else {
+    # Backward FFT. The input is complex, the output is real.
+    ($varname1, $varname2, $var1, $var2) = (qw(output input), $out, $in);
   }
-  else
-  {
-    # Backward FFT. The input is complex, the output is real. $input->dim(0)
-    # == 2, since that's the (real, imag) dimension. Furthermore,
-    # $input->dim(1) should be int($output->dim(0)/2) + 1 (Section 2.4 of
-    # the FFTW3 documentation)
-
-    barf <<EOF if int($out->dim(0)/2) + 1 != $in->dim(1);
+  barf <<EOF if int($var1->dim(0)/2) + 1 != $var2->dim(1);
 $thisfunction: mismatched first dimension:
-\$input->dim(1) == int(\$output->dim(0)/2) + 1 wasn't true.
+\$$varname2->dim(1) == int(\$$varname1->dim(0)/2) + 1 wasn't true.
 Giving up.
 EOF
-
-    for my $idim (1..$rank-1)
-    {
-      if ( $out->dim($idim) != $in->dim($idim + 1) )
-      {
-        barf <<EOF;
+  for my $idim (1..$rank-1) {
+    if ( $var1->dim($idim) != $var2->dim($idim + 1) ) {
+      barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
 EOF
-      }
     }
   }
 }
