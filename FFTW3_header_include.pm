@@ -59,15 +59,15 @@ EOF
   # to have the piddle made to create plans. If I don't, the alignment may
   # differ between plan-time and run-time
   if ( $out->isnull ) {
-    my @dims = getOutDims($in, $is_real_fft, $do_inverse_fft);
-    $out .= zeros($in->type, @dims);
+    my @args = getOutArgs($in, $is_real_fft, $do_inverse_fft);
+    $out .= zeros(@args);
   }
 
   validateArguments( $rank, $is_real_fft, $do_inverse_fft, $thisfunction, $in, $out );
 
   # I need to physical-ize the piddles before I make a plan. Again, normally PP
   # does this, but to make sure alignments match, I need to do this myself, now
-  $in ->make_physical;
+  $in->make_physical;
   $out->make_physical;
 
   my $plan = getPlan( $thisfunction, $rank, $is_real_fft, $do_inverse_fft, $in, $out );
@@ -86,7 +86,7 @@ EOF
   return $out;
 }
 
-sub getOutDims {
+sub getOutArgs {
   my ($in, $is_real_fft, $do_inverse_fft) = @_;
 
   my @dims = $in->dims;
@@ -112,7 +112,7 @@ sub getOutDims {
     shift @dims;
     $dims[0] = 2*($dims[0])-2;
   }
-  return @dims;
+  ($in->type, @dims);
 }
 
 sub validateArguments
