@@ -17,8 +17,7 @@ our $_last_do_double_precision;
 # PP-generated internals. Specifically, this function is called BEFORE any PDL
 # threading happens. Here I make sure the FFTW plan exists, or if it doesn't, I
 # make it. Thus the PP-based internals can safely assume that the plan exists
-sub __fft_internal
-{
+sub __fft_internal {
   my $thisfunction = shift;
 
   my ($do_inverse_fft, $is_real_fft, $rank) = $thisfunction =~ /^(i?)((?:r)?).*fft([0-9]+)/;
@@ -29,31 +28,22 @@ sub __fft_internal
   my $Nargs = scalar @_;
 
   my ($in, $out);
-  if( $Nargs == 2 )
-  {
+  if ( $Nargs == 2 ) {
     # all variables on stack, read in output and temp vars
     ($in, $out) = map {defined $_ ? PDL::Core::topdl($_) : $_} @_;
-  }
-  elsif( $Nargs == 1 )
-  {
+  } elsif ( $Nargs == 1 ) {
     $in = PDL::Core::topdl $_[0];
-    if( $in->is_inplace )
-    {
+    if ( $in->is_inplace ) {
       barf <<EOF if $is_real_fft;
 $thisfunction: in-place real FFTs are not supported since the input/output types and data sizes differ.
 Giving up.
 EOF
-
       $out = $in;
       $in->set_inplace(0);
-    }
-    else
-    {
+    } else {
       $out = PDL::null();
     }
-  }
-  else
-  {
+  } else {
     barf( <<EOF );
 $thisfunction must be given the input or the input and output as args.
 Exactly 1 or 2 arguments are required. Instead I got $Nargs args. Giving up.
@@ -61,15 +51,14 @@ EOF
   }
 
   # make sure the in/out types match. Convert $in if needed. This needs to
-  # happen before we instantiante $out (if it's null) to make sure we know the
+  # happen before we instantiate $out (if it's null) to make sure we know the
   # type
   processTypes( $thisfunction, \$in, \$out );
 
   # I now create a piddle for the null output. Normally PP does this, but I need
   # to have the piddle made to create plans. If I don't, the alignment may
   # differ between plan-time and run-time
-  if( $out->isnull )
-  {
+  if ( $out->isnull ) {
     my @dims = getOutDims($in, $is_real_fft, $do_inverse_fft);
     $out .= zeros($in->type, @dims);
   }
@@ -95,25 +84,19 @@ EOF
   return $out;
 }
 
-sub getOutDims
-{
+sub getOutDims {
   my ($in, $is_real_fft, $do_inverse_fft) = @_;
 
   my @dims = $in->dims;
 
-  if ( !$is_real_fft )
-  {
+  if ( !$is_real_fft ) {
     # complex fft. Output is the same size as the input.
-  }
-  elsif ( !$do_inverse_fft )
-  {
+  } elsif ( !$do_inverse_fft ) {
     # forward real fft
     my $d0 = shift @dims;
     unshift @dims, 1+int($d0/2);
     unshift @dims, 2;
-  }
-  else
-  {
+  } else {
     # backward real fft
     #
     # there's an ambiguity here. I want int($out->dim(0)/2) + 1 == $in->dim(1),

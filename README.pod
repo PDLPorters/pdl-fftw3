@@ -197,7 +197,7 @@ including PDL.
 
 =head1 FUNCTIONS
 
-=head2 fftN (fft1, fft2, fft3, ..., fftn)
+=head2 fftX (fft1, fft2, fft3, ..., fftn)
 
 The basic complex <-> complex FFT. You can pass in the rank as a
 parameter with the C<fftn> form, or append the rank to the function
@@ -208,7 +208,7 @@ the last argument. If the output piddle is passed in, the user I<must>
 make sure the dimensions match.
 
 The 0 dim of the input PDL must have size 2 and run over (real,imaginary)
-components. The transform is carried out over dims 1 through N.
+components. The transform is carried out over dims 1 through X.
 
 The fftn form takes a minimum of two arguments: the PDL to transform,
 and the number of dimensions to transform as a separate argument.
@@ -220,17 +220,17 @@ The following are equivalent:
  fft1( $x, my $X = $x->zeros );
 
 
-=head2 ifftN (ifft1, ifft2, ifft3, ..., fftn)
+=head2 ifftX (ifft1, ifft2, ifft3, ..., ifftn)
 
 The basic, properly normalized, complex <-> complex backward
-FFT. Everything is exactly like in the C<fftN> functions, except the
+FFT. Everything is exactly like in the C<fftX> functions, except the
 inverse transform is computed and normalized, so that (for example)
 
  ifft1( fft1 ( $x ) )
 
 is a good approximation of C<$x> itself.
 
-=head2 rfftN (rfft1, rfft2, rfft3, ..., rfftn)
+=head2 rfftX (rfft1, rfft2, rfft3, ..., rfftn)
 
 The real -> complex FFT. You can pass in the rank with the C<rfftn>
 form, or append the rank to the function name for ranks up to 9.
@@ -248,12 +248,12 @@ The following are equivalent:
  $X = rfft1( $x );
  rfft1( $x, my $X = $x->zeroes );
 
-=head2 irfftN (irfft1, irfft2, irfft3, ..., irfftn)
+=head2 irfftX (irfft1, irfft2, irfft3, ..., irfftn)
 
 The complex -> real inverse FFT. You can pass in the rank with the
 C<irfftn> form, or append the rank to the function name for ranks up
 to 9. Argument passing and interpretation is as described in
-C<rfftN> above. Please read L<Data formats> for details about dimension
+C<rfftX> above. Please read L<Data formats> for details about dimension
 interpretation. There's an ambiguity about the output dimensionality,
 which is described in that section.
 

@@ -148,7 +148,6 @@ sub generateDefinitions
   $pp_def{Code} = slurp('template_complex.c');
   pp_def( "__fft$rank", %pp_def );
 
-
   ##################################################################################
   ####### now I generate the definitions for the real-complex and complex-real cases
   my @dims_real    = @dims;
