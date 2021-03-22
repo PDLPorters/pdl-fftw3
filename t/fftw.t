@@ -66,8 +66,9 @@ sub other2native {
 
   my $x_cplx = cplx $x;
   my $cplx_result = fft1($x_cplx);
-  ok_should_make_plan( all( approx( $cplx_result, $Xref, approx_eps_double) ),
+  ok_should_make_plan( all( approx( $cplx_result, $Xref->cplx, approx_eps_double) ),
                       "Basic 1D complex FFT with PDL::Complex" );
+  isa_ok($cplx_result, 'PDL::Complex', "PDL::Complex return type");
 
   ok_should_make_plan( all( approx( ifft1(fft1($x)), $x, approx_eps_double) ),
                       "Basic 1D complex FFT - inverse(forward) should be the same (normalized)" );
@@ -520,6 +521,16 @@ sub other2native {
   ok_should_make_plan( all( approx( $x7, $x7_back, approx_eps_double) ),
                        "rfft basic test - backward - 7long" );
 
+  # Test real fft's with PDL::Complex arguments
+  my $fx6c=rfft1($x6, zeroes(2,4)->cplx);
+  isa_ok($fx6c, 'PDL::Complex', 'type of real to PDL::Complex forward transform');
+  ok_should_reuse_plan(all( approx($fx6c, $fx6_ref->slice(':,0:3')->cplx, approx_eps_double) ),
+		       'value of real to PDL::Complex forward transform');
+  my $x6c_back=irfft1($fx6c);
+  ok($x6c_back->isa('PDL') && !$x6c_back->isa('PDL::Complex'),
+     'type of PDL::Complex to real backward transform');
+  ok(all( approx($x6c_back, $x6, approx_eps_double) ),
+     'value of PDL::Complex to real backward transform');
 
   # Currently a single plan is made for ALL the thread slices. These tests are
   # meant to exercise cases where this is a bad assumption. I.e. where some

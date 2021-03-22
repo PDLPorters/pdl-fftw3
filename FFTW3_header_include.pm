@@ -85,7 +85,8 @@ EOF
   eval { no strict 'refs'; $internal_function->( $in, $out, $plan ) };
   barf $@ if $@;
 
-  return $out;
+  ($in->isa('PDL::Complex') && !($do_inverse_fft  && $is_real_fft))
+    ? $out->complex : $out;
 }
 
 sub getOutArgs {
@@ -131,10 +132,9 @@ EOF
 
     my $type = ref $arg;
     $type = 'scalar' unless defined $arg;
-
-    barf <<EOF unless ref $arg && ($type eq 'PDL' or (!$is_real_fft and $type eq 'PDL::Complex'));
-$thisfunction arguments must be of type 'PDL'. Instead I got an arg of
-type '$type'. Giving up.
+    barf <<EOF unless ref $arg && $arg->isa('PDL');
+$thisfunction arguments must be of type 'PDL' (including 'PDL::Complex').
+Instead I got an arg of type '$type'. Giving up.
 EOF
   }
 
