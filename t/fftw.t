@@ -837,15 +837,19 @@ done_testing;
 sub ok_should_make_plan
 {
   my ($value, $planname) = @_;
-  ok( $value, $planname );
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  my $ret = ok( $value, $planname );
   check_new_plan( $planname );
+  $ret;
 }
 
 sub ok_should_reuse_plan
 {
   my ($value, $planname) = @_;
-  ok( $value, $planname );
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  my $ret = ok( $value, $planname );
   check_reused_plan( $planname );
+  $ret;
 }
 
 sub check_new_plan
@@ -854,6 +858,7 @@ sub check_new_plan
 
  SKIP: {
     skip "Plan creation checks disabled because pdl memory may be unaligned", 1 unless $do_check_plan_creations;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     ok( $PDL::FFTW3::_Nplans == $Nplans+1,
         "$planname: should make a new plan" );
   }
@@ -867,6 +872,7 @@ sub check_reused_plan
 
  SKIP: {
     skip "Plan creation checks disabled because pdl memory may be unaligned", 1 unless $do_check_plan_creations;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     ok( $PDL::FFTW3::_Nplans == $Nplans,
         "$planname: should reuse an existing plan" );
   }
