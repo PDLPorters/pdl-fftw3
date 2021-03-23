@@ -31,6 +31,14 @@ use constant approx_eps_single => 1e-3;
 
 my $Nplans = 0;
 
+sub other2native {
+  my ($other) = @_;
+  my @other_dims = $other->dims;
+  shift @other_dims; # drop initial 2
+  $other = cplx $other if !UNIVERSAL::isa($other, 'PDL::Complex');
+  zeroes(cdouble, @other_dims) + $other->re + $other->im * ci();
+}
+
 # 1D basic test
 {
   my $x = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
@@ -61,8 +69,15 @@ my $Nplans = 0;
   ok_should_make_plan( all( approx( $cplx_result, $Xref, approx_eps_double) ),
                       "Basic 1D complex FFT with PDL::Complex" );
 
-  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x , approx_eps_double) ),
+  ok_should_make_plan( all( approx( ifft1(fft1($x)), $x, approx_eps_double) ),
                       "Basic 1D complex FFT - inverse(forward) should be the same (normalized)" );
+
+  my $x_nat = other2native($x_cplx);
+  ok_should_make_plan( all( approx( fft1($x_nat), other2native($Xref), approx_eps_double) ),
+                      "Basic 1D native complex FFT" );
+
+  ok_should_make_plan( all( approx( ifft1(fft1($x_nat)), $x_nat, approx_eps_double) ),
+                      "Basic 1D native complex FFT - inverse" );
 }
 
 # 2D basic test
@@ -82,6 +97,10 @@ my $Nplans = 0;
 
   ok_should_make_plan( all( approx( fft2($x), $Xref, approx_eps_double) ),
      "Basic 2D complex FFT - double precision" );
+
+  my $x_nat = other2native($x);
+  ok_should_make_plan( all( approx( fft2($x_nat), other2native($Xref), approx_eps_double) ),
+     "Basic 2D native complex FFT - double precision" );
 
   ok_should_make_plan( all( approx( fft2(float $x), float($Xref), approx_eps_single) ),
      "Basic 2D complex FFT - single precision" );
@@ -145,6 +164,11 @@ my $Nplans = 0;
 
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
      "1D FFTs threaded inside a 3D piddle" );
+
+  my $x_nat = other2native($x);
+  my $f_nat = fft1($x_nat);
+  ok_should_reuse_plan( all( approx( $f_nat, other2native($Xref), approx_eps_double) ),
+     "1D native complex FFTs threaded inside a 3D piddle" );
 }
 
 # try out some different ways of calling the module, make sure the argument

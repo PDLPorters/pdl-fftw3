@@ -73,9 +73,11 @@ EOF
   my $plan = getPlan( $thisfunction, $rank, $is_real_fft, $do_inverse_fft, $in, $out );
   barf "$thisfunction couldn't make a plan. Giving up\n" unless defined $plan;
 
+  my $is_native = !$in->type->real; # native complex
   # I now have the arguments and the plan. Go!
   my $internal_function = 'PDL::__';
   $internal_function .=
+    $is_native ? 'N' :
     !$is_real_fft ? '' :
     $do_inverse_fft ? 'ir' :
     'r';
@@ -165,14 +167,16 @@ EOF
 sub validateArgumentDimensions_complex
 {
   my ( $rank, $thisfunction, $arg ) = @_;
+  my $is_native = !$arg->type->real;
 
   # complex FFT. Identically-sized inputs/outputs
-  barf <<EOF if $arg->dim(0) != 2;
-$thisfunction must have dim(0) == 2 for the inputs and outputs.
+  barf <<EOF if !$is_native and $arg->dim(0) != 2;
+$thisfunction must have dim(0) == 2 for non-native complex inputs and outputs.
 This is the (real,imag) dimension. Giving up.
 EOF
 
-  barf <<EOF if $arg->ndims-1 < $rank;
+  my $dims_cmp = $arg->ndims - ($is_native ? 0 : 1);
+  barf <<EOF if $dims_cmp < $rank;
 Tried to compute a $rank-dimensional FFT, but an array has fewer than $rank dimensions.
 Giving up.
 EOF
@@ -230,7 +234,6 @@ EOF
 
 sub matchDimensions_real {
   my ($thisfunction, $rank, $do_inverse_fft, $in, $out) = @_;
-
   my ($varname1, $varname2, $var1, $var2);
   if ( !$do_inverse_fft ) {
     # Forward FFT. The input is real, the output is complex. $output->dim(0)
@@ -266,28 +269,19 @@ sub processTypes
   # Input and output types must match, and I can only really deal with float and
   # double. If given an output, I refuse to tweak the type of the output,
   # otherwise, I upgrade to float and then to double
-  if( $$out->isnull )
-  {
-    if( $$in->type < float )
-    {
+  if( $$out->isnull ) {
+    if( $$in->type < float ) {
       forceType( $in, (float) );
     }
-  }
-  else
-  {
+  } else {
     # I'm given an output. Make sure this is of a type I can work with,
     # otherwise give up
-    my $targetType;
-
     my $out_type = $$out->type;
-
     barf <<EOF if $out_type < float;
 $thisfunction can only generate 'float' or 'double' output. You gave an output
 of type '$out_type'. I can't change this so I give up
 EOF
-
-    $targetType = ( $out_type < float ) ? (float) : $out_type;
-
+    my $targetType = ( $out_type < float ) ? (float) : $out_type;
     forceType( $in,  $targetType );
     forceType( $out, $targetType );
   }
@@ -309,9 +303,9 @@ sub getPlan
   my @dims; # the dimensionality of the FFT
   if( !$is_real_fft )
   {
-    # complex FFT - ignore first dimension which is (real, imag)
+    # complex FFT
     @dims = $in->dims;
-    shift @dims;
+    shift @dims if $in->type->real; # ignore first dimension which is (real, imag)
   }
   elsif( !$do_inverse_fft )
   {
