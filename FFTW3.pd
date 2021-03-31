@@ -75,7 +75,7 @@ sub irfft$rank { my \$a = __fft_internal( "irfft$rank", \@_ ); \$a /= $rshapestr
 *PDL::irfft$rank = \\&irfft$rank;
 EOF
 
-  pp_add_exported( "fft$rank", "ifft$rank", "rfft$rank", "irfft$rank" );
+  pp_add_exported( map "${_}fft$rank", '', 'i', 'r', 'ir' );
 }
 
 
