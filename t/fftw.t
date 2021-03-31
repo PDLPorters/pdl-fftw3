@@ -522,6 +522,17 @@ sub other2native {
   ok_should_make_plan( all( approx( $x7, $x7_back, approx_eps_double) ),
                        "rfft basic test - backward - 7long" );
 
+  my $fx6_ref_input_nat = other2native($fx6_ref_input);
+  my $x6_nat_back = irfft1($fx6_ref_input_nat, zeros(6));
+  ok_should_reuse_plan( all( approx( $x6_nat_back, $x6, approx_eps_double) ),
+                       "rfft basic test - native backward - 6long - output in arglist" )
+    or diag "Got: ($x6_nat_back)\nExpected ($x6)";
+
+  $x6_nat_back = irfft1($fx6_ref_input_nat);
+  ok_should_reuse_plan( all( approx( $x6_nat_back, $x6, approx_eps_double) ),
+                       "rfft basic test - native backward - 6long - output returned" )
+    or diag "Got: ($x6_nat_back)\nExpected ($x6)";
+
   # Test real fft's with PDL::Complex arguments
   my $fx6c=rfft1($x6, zeroes(2,4)->cplx);
   isa_ok($fx6c, 'PDL::Complex', 'type of real to PDL::Complex forward transform');
