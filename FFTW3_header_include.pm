@@ -101,8 +101,7 @@ sub getOutArgs {
     # complex fft. Output is the same size as the input.
   } elsif ( !$do_inverse_fft ) {
     # forward real fft
-    my $d0 = shift @dims;
-    unshift @dims, 1+int($d0/2);
+    $dims[0] = int($dims[0]/2)+1;
     unshift @dims, 2;
   } else {
     # backward real fft
@@ -120,7 +119,7 @@ sub getOutArgs {
     } else {
       shift @dims;
     }
-    $dims[0] = 2*($dims[0])-2;
+    $dims[0] = 2*($dims[0]-1);
   }
   ($out_type, @dims);
 }
