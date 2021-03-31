@@ -20,7 +20,7 @@ our $_last_do_double_precision;
 sub __fft_internal {
   my $thisfunction = shift;
 
-  my ($do_inverse_fft, $is_real_fft, $rank) = $thisfunction =~ /^(i?)((?:r)?).*fft([0-9]+)/;
+  my ($do_inverse_fft, $is_real_fft, $rank) = $thisfunction =~ /^(i?)(r?).*fft([0-9]+)/;
 
   # first I parse the variables. This is a very direct translation of what PP
   # does normally. Plan-creation has to be outside of PP, so I must re-do this
