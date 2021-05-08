@@ -36,7 +36,7 @@ sub other2native {
   my @other_dims = $other->dims;
   shift @other_dims; # drop initial 2
   $other = cplx $other if !UNIVERSAL::isa($other, 'PDL::Complex');
-  zeroes(cdouble, @other_dims) + $other->re + $other->im * ci();
+  zeroes(cdouble, @other_dims) + $other->re + $other->im * PDL::_ci();
 }
 
 # 1D basic test
