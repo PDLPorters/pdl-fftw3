@@ -89,7 +89,7 @@ pp_addpm({At=> 'Bot'}, pp_line_numbers(__LINE__, sprintf <<'EOF', $maxrank));
 sub _rank_springboard {
   my ($name, $source, $rank, @rest) = @_;
   my $inverse = ($name =~ m/^i/);
-  my $real    = ($name =~ m/r/);
+  my $real    = ($name =~ m/r/) || !$source->type->real;
 
   unless(defined $rank) {
     die "${name}n: second argument must be the rank of the transform you want";

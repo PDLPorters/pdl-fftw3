@@ -81,6 +81,21 @@ sub other2native {
                       "Basic 1D native complex FFT - inverse" );
 }
 
+# ensure ifftn native and PDL::Complex are same
+{
+  my $x_cplx = zeroes(2, 11, 1)->complex;
+  $x_cplx->slice(':,0') .= 1;
+  my $x_nat = other2native($x_cplx);
+  my $with_cplx = ifft1($x_cplx);
+  my $with_nat = ifft1($x_nat);
+  ok all(approx $with_nat, other2native($with_cplx), approx_eps_double), 'ifft1 native matches PDL::Complex'
+    or diag "got:$with_nat\nexpected:$with_cplx";
+  $with_cplx = ifftn($x_cplx, 1);
+  $with_nat = ifftn($x_nat, 1);
+  ok all(approx $with_nat, other2native($with_cplx), approx_eps_double), 'ifftn native matches PDL::Complex'
+    or diag "got:$with_nat\nexpected:$with_cplx";
+}
+
 # 2D basic test
 {
   my $x = sequence(5,7)->cat(1e-2 * sequence(5,7)**2)->mv(-1,0);
