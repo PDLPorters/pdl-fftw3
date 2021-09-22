@@ -6,9 +6,20 @@ on:
     tags-ignore:
       - '*'
   pull_request:
+  create:
 jobs:
-  ubuntu:
+  notify:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: ${{ always() }}
+    steps:
+      - uses: PDLPorters/devops/github-actions/irc-notifications@master
+        with:
+          target-notifications: false # TODO
+  ci:
     runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    needs: notify
     strategy:
       fail-fast: false
       matrix:
@@ -20,36 +31,48 @@ jobs:
             os: ubuntu-latest
             release-test: true
             coverage: true
+          #- perl-version: '5.30'
+          #  os: windows-latest
+          - perl-version: '5.30'
+            os: macos-11
           - perl-version: '5.30'
             os: ubuntu-latest
             perl-threaded: true
     steps:
       - uses: actions/checkout@v2
-      - name: Ubuntu packages
-        run: sudo apt-get -y update && sudo apt-get -y install libfftw3-dev
-      - uses: shogo82148/actions-setup-perl@v1
+      - name: 'ci-dist: target-setup-perl'
+        uses: PDLPorters/devops/github-actions/ci-dist@gha-bulk-actions # TODO
         with:
-          distribution: strawberry # ignored non-windows
+          target-setup-perl: true
           perl-version: ${{ matrix.perl-version }}
-          multi-thread: ${{ matrix.perl-threaded }}
-      - run: cpanm -n PDL::Core::Dev IPC::Run # configure requires
-      - run: cpanm -n --installdeps .
-      - run: perl -V
-      - name: Run release tests # before others as may install useful stuff
-        if: ${{ matrix.release-test }}
-        env:
-          RELEASE_TESTING: 1
+          perl-threaded: ${{ matrix.perl-threaded }}
+      - name: Install FFTW3
+        uses: PDLPorters/devops/github-actions/install-dep-fftw3@gha-bulk-actions # TODO
+      - name: Install PDL dependencies
+        if: matrix.os == 'ubuntu-latest'
+        uses: PDLPorters/devops/github-actions/install-dep-pdl-dep@master
+      - name: Install Perl configure deps
+        shell: bash
         run: |
-          cpanm -n --installdeps --with-develop .
-          prove -lr xt
-      - name: Run tests (no coverage)
-        if: ${{ !matrix.coverage }}
-        run: perl Makefile.PL && HARNESS_OPTIONS='j4' make test
-      - name: Run tests (with coverage)
-        if: ${{ matrix.coverage }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cpanm -n Devel::Cover::Report::Coveralls
-          cpanm git://github.com/mohawk2/Devel--Cover.git@deepdirs
-          HARNESS_OPTIONS='j4' cover -test -relative_only -gcov_chdir -report Coveralls
+          $MYPERL -S cpanm --dev -n PDL::Core::Dev IPC::Run || cat ~/.cpanm/build.log
+      - name: 'ci-dist: target-all'
+        uses: PDLPorters/devops/github-actions/ci-dist@gha-bulk-actions # TODO
+        with:
+          target-setup-perl: false
+          target-install-dist-perl-deps: true
+          target-test-release-testing: true
+          target-test: true
+          test-enable-release-testing: ${{ matrix.release-test }}
+          test-enable-coverage: ${{ matrix.coverage }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-status:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: ${{ always() }}
+    needs: [ 'ci' ]
+    steps:
+      - uses: PDLPorters/devops/github-actions/irc-notifications@master
+        with:
+          target-build-status: false # TODO
+          needs: ${{ toJSON(needs) }}
