@@ -1,8 +1,9 @@
 patches/
 PDL-FFTW3-*.tar.gz
 *~
-FFTW3.o
+FFTW3.o*
 FFTW3.c
 *.bs
 FFTW3.pm
 FFTW3.xs
+pp-*.[co]*

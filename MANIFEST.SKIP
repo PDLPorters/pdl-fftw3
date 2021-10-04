@@ -79,3 +79,4 @@ FFTW3\.bs$
 ^FFTW3\.pm$
 ^FFTW3\.xs$
 ^xt/
+pp-\w*\.[co]

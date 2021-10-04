@@ -42,7 +42,7 @@ if( eval "require Alien::FFTW3" ) {
     chomp($cflags, $libs);
 }
 
-my @package = qw(FFTW3.pd FFTW3 PDL::FFTW3);
+my @package = (qw(FFTW3.pd FFTW3 PDL::FFTW3), undef, 1);
 my %descriptor = pdlpp_stdargs(\@package);
 
 $descriptor{VERSION_FROM} = 'FFTW3.pd';
