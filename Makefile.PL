@@ -53,7 +53,7 @@ $descriptor{CCFLAGS} .= ( ($Config{ccname} =~ m/gcc/) ? '--std=gnu99 ' : '' ) . 
 push @{$descriptor{LIBS}  },  $libs;
 
 $descriptor{INC} = '' unless defined $descriptor{INC};
-$descriptor{INC} .= $cflags;
+$descriptor{INC} .= " $cflags";
 
 $descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_real.c
                                                    compute_plan_template.xs
