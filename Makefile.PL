@@ -55,8 +55,7 @@ push @{$descriptor{LIBS}  },  $libs;
 $descriptor{INC} = '' unless defined $descriptor{INC};
 $descriptor{INC} .= " $cflags";
 
-$descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_real.c
-                                                   compute_plan_template.xs)) };
+$descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_real.c)) };
 
 $descriptor{PREREQ_PM} = {
   'PDL' => '2.049', # as_native

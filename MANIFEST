@@ -1,5 +1,4 @@
 Changes
-compute_plan_template.xs
 fftw3.pd
 LICENSE
 Makefile.PL
