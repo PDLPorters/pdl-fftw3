@@ -56,8 +56,7 @@ $descriptor{INC} = '' unless defined $descriptor{INC};
 $descriptor{INC} .= " $cflags";
 
 $descriptor{depend} = { 'FFTW3.pm' => join(' ', qw(template_complex.c template_real.c
-                                                   compute_plan_template.xs
-                                                   FFTW3_header_include.pm)) };
+                                                   compute_plan_template.xs)) };
 
 $descriptor{PREREQ_PM} = {
   'PDL' => '2.049', # as_native
