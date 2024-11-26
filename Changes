@@ -1,3 +1,5 @@
+- remove support for PDL::Complex entirely
+
 0.19 2024-02-24
 - fix test to not broadcast over output
 

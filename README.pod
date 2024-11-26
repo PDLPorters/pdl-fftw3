@@ -7,7 +7,6 @@ PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
  use PDL;
  use PDL::FFTW3;
  use PDL::Graphics::Gnuplot;
- use PDL::Complex;
 
  # Basic functionality
  my $x = sin( sequence(100) * 2.0 ) + 2.0 * cos( sequence(100) / 3.0 );
@@ -138,17 +137,9 @@ a single-precision floating point transform (and return data of that type).
 
  fft1( $x->byte )
 
-This module expects complex numbers to be stored as a (real,imag) pair in the
-first dimension of an ndarray. Thus in a complex ndarray C<$x>, it is expected that
-C<$x-E<gt>dim(0) == 2> (this module verifies this before proceeding).
-As of 0.10, it works to pass in a L<PDL::Complex> object, though the
-output will still currently be a similarly-shaped "real" L<PDL>
-object with the initial dimension of 2. This is intended to be changed
-so the output type is the same as the input.
-
-As of version 0.11, you can also pass in ndarrays with the new "native
-complex" types (C<cfloat>, C<cdouble>), without the initial dimension of
-2. Outputs will also be native complex.
+As of 0.20, this module expects complex numbers to be stored as "native
+complex" types (C<cfloat>, C<cdouble>). Outputs will also be native
+complex.
 
 Generally, the sizes of the input and the output must match. This is completely
 true for the complex <-> complex transforms: the output will have the same size

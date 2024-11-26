@@ -89,9 +89,7 @@ EOF
   $internal_function .= "fft$rank";
   eval { no strict 'refs'; $internal_function->( $in, $out, $plan ) };
   barf $@ if $@;
-
-  ($in->isa('PDL::Complex') && !($do_inverse_fft  && $is_real_fft))
-    ? $out->complex : $out;
+  $out;
 }
 
 sub getOutArgs {
@@ -147,7 +145,7 @@ EOF
     my $type = ref $arg;
     $type = 'scalar' unless defined $arg;
     barf <<EOF unless ref $arg && $arg->isa('PDL');
-$thisfunction arguments must be of type 'PDL' (including 'PDL::Complex').
+$thisfunction arguments must be of type 'PDL'.
 Instead I got an arg of type '$type'. Giving up.
 EOF
   }
