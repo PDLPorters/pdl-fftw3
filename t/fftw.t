@@ -182,46 +182,46 @@ my $Nplans = 0;
 # try out some different ways of calling the module, make sure the argument
 # verification works
 {
-  eval( 'fft1( )' );
+  eval { fft1( ) };
   ok( $@, "Calling fft1 with no arguments should fail" );
 
-  eval( 'fft1(sequence(2,5), sequence(2,5), sequence(2,5) )' );
+  eval { fft1(sequence(2,5), sequence(2,5), sequence(2,5) ) };
   ok( $@, "Calling fft1 with too many arguments should fail" );
 
-  eval( 'fft1(sequence(5))' );
+  eval { fft1(sequence(5)) };
   ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 1");
 
-  eval( 'fft1(sequence(1,5))' );
+  eval { fft1(sequence(1,5)) };
   ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 2");
 
-  eval( 'fft1(sequence(3,5))' );
+  eval { fft1(sequence(3,5)) };
   ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 3");
 
-  eval( 'fft1(null))' );
+  eval { fft1(null) };
   ok( $@, "Calling fft1(null) should fail.");
 
-  eval( 'fft1( {} ))' );
+  eval { fft1( {} ) };
   ok( $@, "Calling fft1( {} ) should fail (want ndarray input).");
 
-  eval( 'fft1(sequence(2,5), sequence(3,5) )' );
+  eval { fft1(sequence(2,5), sequence(3,5) ) };
   ok( $@, "Calling fft1 with mismatched arguments should fail" );
 
   # should be able to ask for output in the arglist
   my $x  = random(2,10);
   my $f1 = fft1( $x );
   my $f2;
-  eval( 'fft1( $x, $f2 )' );
+  eval { fft1( $x, $f2 ) };
   ok( $@, "Calling fft1 with undef argument should fail" );
 
   $f2 = null;
-  eval( 'fft1( $x, $f2 )' );
+  eval { fft1( $x, $f2 ) };
   ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
                         "Should be able to ask for output in the arglist" );
 
-  eval( 'fft4( sequence(2,5,3,4,4) );' );
+  eval { fft4( sequence(2,5,3,4,4) ); };
   ok_should_make_plan( ! $@, "dimensionality baseline" );
 
-  eval( 'fft4( sequence(2,5,4,4) );' );
+  eval { fft4( sequence(2,5,4,4) ); };
   ok( $@, "too few dimensions should fail" );
 }
 
@@ -474,7 +474,7 @@ my $Nplans = 0;
       "double input/float output should do a float FFT" );
 
   $f = $x->zeros->byte;
-  eval( 'fft1($x, $f)' );
+  eval { fft1($x, $f) };
   ok( $@, "Output to 'byte' should fail");
 
   $f = $x->zeros;
@@ -679,96 +679,96 @@ my $Nplans = 0;
 # real fft sanity checks
 {
   {
-    eval 'rfft1( sequence(6) );';
+    eval { rfft1( sequence(6) ) };
     ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline forward" );
-    eval 'rfft1( inplace sequence(6) );';
+    eval { rfft1( inplace sequence(6) ) };
     ok( $@, "real ffts shouldn't work inplace - forward" );
   }
 
   {
-    eval 'irfft1( sequence(2,4) );';
+    eval { irfft1( sequence(2,4) ) };
     ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline backward" );
-    eval 'irfft1( inplace sequence(2,4) );';
+    eval { irfft1( inplace sequence(2,4) ) };
     ok( $@, "real ffts shouldn't work inplace - backward" );
   }
 
   {
-    eval 'rfft1( sequence(7), sequence(2,4) );';
+    eval { rfft1( sequence(7), sequence(2,4) ) };
     ok_should_reuse_plan( ! $@, "real fft dims - baseline");
 
-    eval 'rfft1( sequence(7), sequence(3,4) );';
+    eval { rfft1( sequence(7), sequence(3,4) ) };
     ok( $@, "real fft dimensionality 1");
 
-    eval 'rfft1( sequence(7), sequence(1,4) );';
+    eval { rfft1( sequence(7), sequence(1,4) ) };
     ok( $@, "real fft dimensionality 2");
 
-    eval 'rfft1( sequence(7), sequence(2,5) );';
+    eval { rfft1( sequence(7), sequence(2,5) ) };
     ok( $@, "real fft dimensionality 3");
 
-    eval 'rfft1( sequence(7), sequence(2,3) );';
+    eval { rfft1( sequence(7), sequence(2,3) ) };
     ok( $@, "real fft dimensionality 4");
   }
 
   {
-    eval( 'rfft4( sequence(5,3,4,4) );' );
+    eval { rfft4( sequence(5,3,4,4) ) };
     ok_should_make_plan( ! $@, "real dimensionality baseline" );
 
-    eval( 'rfft4( sequence(5,4,4) );' );
+    eval { rfft4( sequence(5,4,4) ) };
     ok( $@, "real dimensionality: too few dimensions should fail" );
 
-    eval( 'irfft4( sequence(2,5,3,4,4) );' );
+    eval { irfft4( sequence(2,5,3,4,4) ) };
     ok_should_make_plan( ! $@, "real-backward dimensionality baseline" );
 
-    eval( 'irfft4( sequence(5,4,4) );' );
+    eval { irfft4( sequence(5,4,4) ) };
     ok( $@, "real-backward dimensionality: too few dimensions should fail" );
   }
 
   {
-    eval( 'rfft4( sequence(5,3,4,4), sequence(2,3,3,4,4) );' );
+    eval { rfft4( sequence(5,3,4,4), sequence(2,3,3,4,4) ) };
     ok_should_reuse_plan( ! $@, "real dimensionality baseline - more explicit" );
 
-    eval( 'rfft4( sequence(5,3,4,4), sequence(2,3,3,4,4,3) );' );
+    eval { rfft4( sequence(5,3,4,4), sequence(2,3,3,4,4,3) ) };
     ok_should_reuse_plan( ! $@, "real dimensionality baseline - extra dims should be ok" );
 
-    eval( 'rfft4( sequence(5,3,4,4), sequence(3,3,3,4,3) );' );
+    eval { rfft4( sequence(5,3,4,4), sequence(3,3,3,4,3) ) };
     ok( $@, "real dimensionality - output should look like complex numbers" );
 
-    eval( 'rfft4( sequence(5,3,4,4), sequence(2,3,3,4,3) );' );
+    eval { rfft4( sequence(5,3,4,4), sequence(2,3,3,4,3) ) };
     ok( $@, "real dimensionality - different dims should break 1" );
 
-    eval( 'rfft4( sequence(5,3,4,4), sequence(2,3,3,4,5) );' );
+    eval { rfft4( sequence(5,3,4,4), sequence(2,3,3,4,5) ) };
     ok( $@, "real dimensionality - different dims should break 2" );
 
-    eval( 'rfft4( sequence(4,3,4,4), sequence(2,3,3,4,4) );' );
+    eval { rfft4( sequence(4,3,4,4), sequence(2,3,3,4,4) ) };
     ok_should_make_plan( !$@, "real dimensionality - slightly different complex dims still ok" );
 
-    eval( 'rfft4( sequence(6,3,4,4), sequence(2,3,3,4,4) );' );
+    eval { rfft4( sequence(6,3,4,4), sequence(2,3,3,4,4) ) };
     ok( $@, "real dimensionality - too different complex dims should break" );
   }
 
   {
-    eval( 'irfft4( sequence(2,3,3,4,4) );' );
+    eval { irfft4( sequence(2,3,3,4,4) ) };
     ok_should_make_plan( ! $@, "real-backward dimensionality baseline 1" );
 
-    eval( 'irfft4( sequence(2,3,3,4,4), sequence(5,3,4,4) );' );
+    eval { irfft4( sequence(2,3,3,4,4), sequence(5,3,4,4) ) };
     ok_should_make_plan( ! $@, "real-backward dimensionality baseline 2" );
 
-    eval( 'irfft4( sequence(2,3,3,4,4), sequence(5,3,4,4,3) );' );
+    eval { irfft4( sequence(2,3,3,4,4), sequence(5,3,4,4,3) ) };
     ok_should_reuse_plan( ! $@, "real-backward dimensionality baseline - extra dims should be ok" );
 
-    eval( 'irfft4( sequence(3,3,3,4,4,3), sequence(5,3,4,4) );' );
+    eval { irfft4( sequence(3,3,3,4,4,3), sequence(5,3,4,4) ) };
     ok( $@, "real-backward dimensionality - input should look like complex numbers" );
 
-    eval( 'irfft4( sequence(2,3,3,4,3), sequence(5,3,4,4) );' );
+    eval { irfft4( sequence(2,3,3,4,3), sequence(5,3,4,4) ) };
     ok( $@, "real-backward dimensionality - different dims should break 1" );
 
-    eval( 'irfft4( sequence(2,3,3,4,5), sequence(5,3,4,4) );' );
+    eval { irfft4( sequence(2,3,3,4,5), sequence(5,3,4,4) ) };
     ok( $@, "real-backward dimensionality - different dims should break 2" );
 
-    eval( 'irfft4( sequence(2,3,3,4,4), sequence(4,3,4,4) );' );
+    eval { irfft4( sequence(2,3,3,4,4), sequence(4,3,4,4) ) };
     ok_should_reuse_plan( !$@, "real-backward dimensionality - slightly different complex dims still ok" );
 
-    eval( 'irfft4( sequence(2,3,3,4,4), sequence(6,3,4,4) );' );
+    eval { irfft4( sequence(2,3,3,4,4), sequence(6,3,4,4) ) };
     ok( $@, "real-backward dimensionality - too different complex dims should break" );
   }
 }
