@@ -1,6 +1,6 @@
 Changes
 compute_plan_template.xs
-FFTW3.pd
+fftw3.pd
 LICENSE
 Makefile.PL
 MANIFEST			This list of files

@@ -42,10 +42,10 @@ if( eval "require Alien::FFTW3" ) {
     chomp($cflags, $libs);
 }
 
-my @package = (qw(FFTW3.pd FFTW3 PDL::FFTW3), undef, 1);
+my @package = (qw(fftw3.pd FFTW3 PDL::FFTW3), undef, 1);
 my %descriptor = pdlpp_stdargs(\@package);
 
-$descriptor{VERSION_FROM} = 'FFTW3.pd';
+$descriptor{VERSION_FROM} = 'fftw3.pd';
 $descriptor{OPTIMIZE}  = ($Config{ccname} =~ m/gcc/) ? '-O2' : $Config{optimize};
 $descriptor{CCFLAGS} .= ( ($Config{ccname} =~ m/gcc/) ? '--std=gnu99 ' : '' ) . $Config{ccflags};
 
