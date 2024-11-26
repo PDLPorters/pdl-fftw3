@@ -602,29 +602,29 @@ my $Nplans = 0;
 
 
   # backward
-  my $x64_back = irfft2($x64_ref->slice(':,0:3,:') );
+  my $x64_back = irfft2(PDL::czip($x64_ref->slice(':,0:3,:')->using(0,1)) );
   ok_should_make_plan( all( approx( $x64, $x64_back, approx_eps_double) ),
                        "rfft 2d test - backward - 6,4 - output returned" );
 
   $x64_back = zeros(6,4);
-  irfft2($x64_ref->slice(':,0:3,:'), $x64_back );
+  irfft2(PDL::czip($x64_ref->slice(':,0:3,:')->using(0,1)), $x64_back );
   ok_should_reuse_plan( all( approx( $x64, $x64_back, approx_eps_double) ),
                         "rfft 2d test - backward - 6,4 - output in arglist" );
 
-  my $x65_back = irfft2($x65_ref->slice(':,0:3,:') );
+  my $x65_back = irfft2(PDL::czip($x65_ref->slice(':,0:3,:')->using(0,1)) );
   ok_should_make_plan( all( approx( $x65, $x65_back, approx_eps_double) ),
                        "rfft 2d test - backward - 6,5 - output returned" );
 
   $x65_back = zeros(6,5);
-  irfft2($x65_ref->slice(':,0:3,:'), $x65_back );
+  irfft2(PDL::czip($x65_ref->slice(':,0:3,:')->using(0,1)), $x65_back );
   ok_should_reuse_plan( all( approx( $x65, $x65_back, approx_eps_double) ),
                         "rfft 2d test - backward - 6,5 - output in arglist" );
 
-  my $x74_back = irfft2($x74_ref->slice(':,0:3,:'), zeros(7,4) );
+  my $x74_back = irfft2(PDL::czip($x74_ref->slice(':,0:3,:')->using(0,1)), zeros(7,4) );
   ok_should_make_plan( all( approx( $x74, $x74_back, approx_eps_double) ),
                        "rfft 2d test - backward - 7,4" );
 
-  my $x75_back = irfft2($x75_ref->slice(':,0:3,:'), zeros(7,5) );
+  my $x75_back = irfft2(PDL::czip($x75_ref->slice(':,0:3,:')->using(0,1)), zeros(7,5) );
   ok_should_make_plan( all( approx( $x75, $x75_back, approx_eps_double) ),
                        "rfft 2d test - backward - 7,5" );
 }
@@ -639,7 +639,7 @@ my $Nplans = 0;
   }
 
   {
-    eval { irfft1( sequence(2,4) ) };
+    eval { irfft1( sequence(cdouble,4) ) };
     ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline backward" );
     eval { irfft1( inplace sequence(2,4) ) };
     ok( $@, "real ffts shouldn't work inplace - backward" );
@@ -669,7 +669,7 @@ my $Nplans = 0;
     eval { rfft4( sequence(5,4,4) ) };
     ok( $@, "real dimensionality: too few dimensions should fail" );
 
-    eval { irfft4( sequence(2,5,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,5,3,4,4) ) };
     ok_should_make_plan( ! $@, "real-backward dimensionality baseline" );
 
     eval { irfft4( sequence(5,4,4) ) };
@@ -700,28 +700,28 @@ my $Nplans = 0;
   }
 
   {
-    eval { irfft4( sequence(2,3,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,4) ) };
     ok_should_make_plan( ! $@, "real-backward dimensionality baseline 1" );
 
-    eval { irfft4( sequence(2,3,3,4,4), sequence(5,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,4), sequence(5,3,4,4) ) };
     ok_should_make_plan( ! $@, "real-backward dimensionality baseline 2" );
 
-    eval { irfft4( sequence(2,3,3,4,4), sequence(5,3,4,4,3) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,4), sequence(5,3,4,4,3) ) };
     ok_should_reuse_plan( ! $@, "real-backward dimensionality baseline - extra dims should be ok" );
 
     eval { irfft4( sequence(3,3,3,4,4,3), sequence(5,3,4,4) ) };
     ok( $@, "real-backward dimensionality - input should look like complex numbers" );
 
-    eval { irfft4( sequence(2,3,3,4,3), sequence(5,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,3), sequence(5,3,4,4) ) };
     ok( $@, "real-backward dimensionality - different dims should break 1" );
 
-    eval { irfft4( sequence(2,3,3,4,5), sequence(5,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,5), sequence(5,3,4,4) ) };
     ok( $@, "real-backward dimensionality - different dims should break 2" );
 
-    eval { irfft4( sequence(2,3,3,4,4), sequence(4,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,4), sequence(4,3,4,4) ) };
     ok_should_reuse_plan( !$@, "real-backward dimensionality - slightly different complex dims still ok" );
 
-    eval { irfft4( sequence(2,3,3,4,4), sequence(6,3,4,4) ) };
+    eval { irfft4( sequence(cdouble,3,3,4,4), sequence(6,3,4,4) ) };
     ok( $@, "real-backward dimensionality - too different complex dims should break" );
   }
 }
@@ -793,7 +793,7 @@ my $Nplans = 0;
 			 "parameterized forward real FFT works (1d on a 3d var)" );
 
     # inverse on 2d -- should be a normalized forward on the non-transformed direction
-    $c = irfftn($b,2);
+    $c = irfftn(PDL::czip($b->using(0,1)),2);
     $ctemplate = zeroes($a);
     $ctemplate->slice('(0),:,(0)') .= 0.25;
     ok_should_make_plan( all( approx( $c, $ctemplate, approx_eps_double) ),

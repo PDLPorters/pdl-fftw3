@@ -137,7 +137,7 @@ a single-precision floating point transform (and return data of that type).
  fft1( $x->byte )
 
 As of 0.20, this module expects complex numbers to be stored as "native
-complex" types (C<cfloat>, C<cdouble>). Outputs will also be native
+complex" types (C<cfloat>, C<cdouble>). Complex outputs will also be native
 complex.
 
 Generally, the sizes of the input and the output must match. This is completely
