@@ -11,7 +11,7 @@ PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
  # Basic functionality
  my $x = sin( sequence(100) * 2.0 ) + 2.0 * cos( sequence(100) / 3.0 );
  my $F = rfft1( $x );
- gplot( with => 'lines', inner($F,$F));
+ gplot( with => 'lines', $F->abs );
 
  =====>
 
@@ -64,8 +64,7 @@ PDL::FFTW3 - PDL interface to the Fastest Fourier Transform in the West v3
 
  # compute the correlation
  my $F12  = rfft1( cat($y1,$y2) );
- my $corr = irfft1( Cmul(      $F12(:,:,(1)),
-                            Cconj $F12(:,:,(0)) ) );
+ my $corr = irfft1( $F12(:,(1)) * $F12(:,(0))->conj );
  # and find the peak
  say maximum_ind($corr);
 
