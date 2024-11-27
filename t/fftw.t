@@ -165,15 +165,6 @@ my $Nplans = 0;
   eval { fft1(sequence(2,5), sequence(2,5), sequence(2,5) ) };
   ok( $@, "Calling fft1 with too many arguments should fail" );
 
-  eval { fft1(sequence(5)) };
-  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 1");
-
-  eval { fft1(sequence(1,5)) };
-  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 2");
-
-  eval { fft1(sequence(3,5)) };
-  ok( $@, "Calling fft1 without dim(0)==2 should fail. Trial 3");
-
   eval { fft1(null) };
   ok( $@, "Calling fft1(null) should fail.");
 
@@ -184,7 +175,7 @@ my $Nplans = 0;
   ok( $@, "Calling fft1 with mismatched arguments should fail" );
 
   # should be able to ask for output in the arglist
-  my $x  = random(2,10);
+  my $x  = random(10)->r2C;
   my $f1 = fft1( $x );
   my $f2;
   eval { fft1( $x, $f2 ) };
@@ -195,19 +186,19 @@ my $Nplans = 0;
   ok_should_reuse_plan( !$@ && all( approx( $f1, $f2 ), approx_eps_double),
                         "Should be able to ask for output in the arglist" );
 
-  eval { fft4( sequence(2,5,3,4,4) ); };
+  eval { fft4( sequence(5,3,4,4)->r2C ); };
   ok_should_make_plan( ! $@, "dimensionality baseline" );
 
-  eval { fft4( sequence(2,5,4,4) ); };
+  eval { fft4( sequence(5,4,4)->r2C ); };
   ok( $@, "too few dimensions should fail" );
 }
 
 # inplace checks
 {
-  my $xorig = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
+  my $xorig = PDL::czip(sequence(10), sequence(10)**2);
 
   # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
-  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
+  my $Xref = PDL::czip(pdl( [45.0000000000000,+285.0000000000000],
                   [-158.8841768587627,+17.7490974608742],
                   [-73.8190960235587,-28.6459544426446],
                   [-41.3271264002680,-38.7279671349711],
@@ -216,7 +207,7 @@ my $Nplans = 0;
                   [11.2459848116453,-46.0967344361641],
                   [31.3271264002680,-45.9933924150247],
                   [63.8190960235587,-42.4097736473563],
-                  [148.8841768587627,-13.0277379108784] );
+                  [148.8841768587627,-13.0277379108784] )->using(0,1));
 
   my $x = $xorig->copy;
   fft1($x, $x);
@@ -233,8 +224,8 @@ my $Nplans = 0;
 
 # lots of 2D ffts threaded in a 3d array
 {
-  my $x = PDL::cat( sequence(6,5,4)**1.1,
-                    (abs(sequence(6,5,4) - 10))**0.8 )->mv(-1,0);
+  my $x = PDL::czip( sequence(6,5,4)**1.1,
+                    (abs(sequence(6,5,4) - 10))**0.8 );
 
   # in octave I compute 4 slices separately
   #  re = reshape(0:119,6,4*5) .** 1.1
@@ -243,7 +234,7 @@ my $Nplans = 0;
   #  slice2 = fft2(re(:, 6:10) + i*im(:, 6:10))
   #  slice3 = fft2(re(:,11:15) + i*im(:,11:15))
   #  slice4 = fft2(re(:,16:20) + i*im(:,16:20))
-  my $Xref = pdl( [
+  my $Xref = PDL::czip(pdl( [
                    [[581.176580714253419,+154.612158706515430],[-22.954098523846195,+36.194518039527026],[-22.875879493772423,+10.551998195290025],[-20.913788738508782,-2.707592216571274],[-18.862059487643258,-13.839402151924361],[-18.129097984835099,-37.099701249860743]],
                    [[-178.408651850856160,+183.139542083867042],[11.470377256968625,-1.718053156591536],[5.282150186239193,+2.913557271028725],[2.408626479527148,+3.419465916129992],[1.652807905147736,+4.600098529135501],[-1.590381734378646,+10.091671271587607]],
                    [[-135.442076986364611,+37.496948236259065],[4.372069715046538,-5.432458423609452],[3.947276983624399,-0.475185262726981],[2.122893057072843,+1.257276333468205],[1.641541660378284,+1.195733119702670],[3.269737048112678,+3.674743286679739]],
@@ -269,12 +260,12 @@ my $Nplans = 0;
                    [[-1.96380323533266e+02,+1.88152304723188e+02],[-1.92865464527335e-01,-2.02889176717224e-01],[-3.86947461251954e-02,-1.56831303578437e-01],[3.85138755642588e-02,-1.34443894895275e-01],[1.15794735723374e-01,-1.12485367180954e-01],[2.70543304787344e-01,-6.98569500483150e-02]],
                    [[-1.66872451417648e+02,+2.23039858589711e+01],[-2.77487657486899e-02,-1.70406376180963e-01],[3.47883788886858e-02,-9.33380414940140e-02],[6.63337828406928e-02,-5.50977611340899e-02],[9.80588055564104e-02,-1.70571735903083e-02],[1.62032394212931e-01,+5.84144732089472e-02]],
                    [[-1.48137315640352e+02,-8.03755018459729e+01],[7.46992540366458e-02,-1.55140422934376e-01],[8.17655449197855e-02,-5.64025227538078e-02],[8.56906163946222e-02,-7.12349856999575e-03],[8.98748544483531e-02,+4.20897732548463e-02],[9.90136072387319e-02,+1.40302117404749e-01]],
-                   [[-1.17049392363129e+02,-2.46859689910763e+02],[2.39899060049070e-01,-1.38101687968226e-01],[1.59658915211960e-01,-6.48727639912472e-04],[1.20144019881925e-01,+6.82934899895806e-02],[8.10343889012709e-02,+1.37369911169460e-01],[4.03481145874271e-03,+2.75896474493798e-01]]] );
+                   [[-1.17049392363129e+02,-2.46859689910763e+02],[2.39899060049070e-01,-1.38101687968226e-01],[1.59658915211960e-01,-6.48727639912472e-04],[1.20144019881925e-01,+6.82934899895806e-02],[8.10343889012709e-02,+1.37369911169460e-01],[4.03481145874271e-03,+2.75896474493798e-01]]] )->using(0,1));
 
   ok_should_make_plan( all( approx( fft2($x), $Xref, approx_eps_double) ),
      "2D FFTs threaded inside a 3D ndarray" );
 
-  ok_should_make_plan( all( approx( fft2( float $x), float($Xref), approx_eps_single) ),
+  ok_should_make_plan( all( approx( fft2(cfloat $x), cfloat($Xref), approx_eps_single) ),
      "2D FFTs threaded inside a 3D ndarray - single precision" );
 
 
@@ -282,7 +273,7 @@ my $Nplans = 0;
   # nembed logic works correctly. It turns out that $P() in PP physicalizes the
   # data, so no nembed logic currently exists, and stuff works anyway
 
-  my $x_slice1_connected = $x->slice(':,0:4,:,:');
+  my $x_slice1_connected = $x->slice('0:4');
   my $x_slice1_severed   = $x_slice1_connected->copy;
 
   # octave ref; x is the same, but I slice it differently
@@ -290,8 +281,7 @@ my $Nplans = 0;
   #  slice2 = fft2(re(1:5, 6:10) + i*im(1:5, 6:10))
   #  slice3 = fft2(re(1:5,11:15) + i*im(1:5,11:15))
   #  slice4 = fft2(re(1:5,16:20) + i*im(1:5,16:20))
-  my $X_slice1_ref =
-    pdl( [
+  my $X_slice1_ref = PDL::czip(pdl( [
           [[466.673919234444952,+126.917907968545364],[-17.870670056332415,+22.924773314027945],[-17.419713146828549,+4.981405529320815],[-17.185596880754357,-6.395001262195541],[-16.329892079156576,-25.335769447218507]],
           [[-146.569840424967879,+155.523541145286003],[7.951065332965691,-1.600154624557469],[4.722562521481950,+2.138095446385981],[2.501374281282990,+4.563007814082358],[-1.259388175222825,+8.080745148100860]],
           [[-111.129976688165755,+32.155437078172781],[2.298297449575815,-3.696832692971159],[2.653255527169226,-1.211338065207176],[2.961744281698524,+0.603384484335323],[3.142880661280621,+3.580230270481282]],
@@ -314,7 +304,7 @@ my $Nplans = 0;
           [[-1.63618296453467e+02,+1.56682279811098e+02],[-1.21816276616064e-01,-1.57768013235654e-01],[-4.20394797933782e-03,-1.23055796103499e-01],[6.85931647323148e-02,-1.02200070987194e-01],[1.86530323460939e-01,-6.94242384647662e-02]],
           [[-1.39005402614916e+02,+1.85410801291960e+01],[-7.24932070775660e-03,-1.22713508583900e-01],[4.06094617668798e-02,-6.41494708720088e-02],[7.04423276692341e-02,-2.82307037179682e-02],[1.19111127939139e-01,+2.94310371284693e-02]],
           [[-1.23376794373435e+02,-6.69854082776712e+01],[6.41877749756504e-02,-1.04443436094924e-01],[6.98384223826521e-02,-2.92264510229911e-02],[7.36940494064069e-02,+1.71728447983243e-02],[8.05143239080554e-02,+9.20916536812421e-02]],
-          [[-9.74417295843736e+01,-2.05659722932842e+02],[1.79920562610709e-01,-8.03744824636155e-02],[1.19169692096844e-01,+2.45697427068684e-02],[8.21878607839186e-02,+8.96232824108548e-02],[2.32671625274674e-02,+1.95170681256241e-01]]] );
+          [[-9.74417295843736e+01,-2.05659722932842e+02],[1.79920562610709e-01,-8.03744824636155e-02],[1.19169692096844e-01,+2.45697427068684e-02],[8.21878607839186e-02,+8.96232824108548e-02],[2.32671625274674e-02,+1.95170681256241e-01]]] )->using(0,1));
 
   ok_should_make_plan( all( approx( fft2($x_slice1_severed), $X_slice1_ref, approx_eps_double) ),
      "2D FFTs threaded inside a 3D ndarray - slice1 - severed" );
@@ -325,14 +315,14 @@ my $Nplans = 0;
   # now go again with single precision. If $P() didn't physicalize its input,
   # this would no longer be aligned like before, since the input has shifted by
   # 4 bytes
-  ok_should_make_plan( all( approx( fft2(float $x_slice1_connected), float($X_slice1_ref), approx_eps_single) ),
+  ok_should_make_plan( all( approx( fft2(cfloat $x_slice1_connected), cfloat($X_slice1_ref), approx_eps_single) ),
                        "2D FFTs threaded inside a 3D ndarray - slice1 - connected - single precision" );
 
 
 
 
   # Similar, but slicing from 1
-  my $x_slice2_connected = $x->slice(':,1:5,:,:');
+  my $x_slice2_connected = $x->slice('1:5');
   my $x_slice2_severed   = $x_slice2_connected->copy;
 
   # octave ref; x is the same, but I slice it differently
@@ -340,8 +330,7 @@ my $Nplans = 0;
   #  slice2 = fft2(re(2:6, 6:10) + i*im(2:6, 6:10))
   #  slice3 = fft2(re(2:6,11:15) + i*im(2:6,11:15))
   #  slice4 = fft2(re(2:6,16:20) + i*im(2:6,16:20))
-  my $X_slice2_ref =
-    pdl( [
+  my $X_slice2_ref = PDL::czip(pdl( [
           [[501.602971299978947,+129.993495486019384],[-19.456482657442123,+24.258038724117910],[-18.901134436232283,+3.773486895387808],[-16.305859228821138,-7.743879151484332],[-15.423234561310013,-24.567626816829364]],
           [[-151.877806557964107,+149.398495098007515],[8.163865009246718,+0.126518424791354],[2.817072235106799,+2.881419182368629],[1.352437467320572,+2.913388776160406],[-0.169443715571585,+6.850269367688697]],
           [[-115.427317232676344,+31.210772021296826],[3.796588391538631,-3.335504645848345],[2.597359558283342,+0.777874238982427],[0.879920386805304,+1.061145569333210],[2.149823747278043,+1.912391035534666]],
@@ -364,7 +353,7 @@ my $Nplans = 0;
           [[-1.63682484895292e+02,+1.56906338384727e+02],[-1.20524688463036e-01,-1.56416089806520e-01],[-4.03733743270347e-03,-1.21913001592987e-01],[6.80631350314347e-02,-1.01174630711859e-01],[1.84871712650214e-01,-6.85694062663622e-02]],
           [[-1.39115953613999e+02,+1.86329023623412e+01],[-7.02295195511970e-03,-1.21580690846917e-01],[4.03182507468609e-02,-6.34983391169523e-02],[6.98267599630536e-02,-2.78713424589018e-02],[1.17963938106273e-01,+2.93281548087439e-02]],
           [[-1.23519603679800e+02,-6.69735391127112e+01],[6.37479744806300e-02,-1.03380542771702e-01],[6.92370420039889e-02,-2.88488700507459e-02],[7.29858824833397e-02,+1.71294493033826e-02],[7.96224057648701e-02,+9.13717087078728e-02]],
-          [[-9.76419555018576e+01,-2.05773543168977e+02],[1.78415452819879e-01,-7.93210083326257e-02],[1.18035987634609e-01,+2.45615120500224e-02],[8.12721813043989e-02,+8.89567757119387e-02],[2.26856083517065e-02,+1.93436447059624e-01]]] );
+          [[-9.76419555018576e+01,-2.05773543168977e+02],[1.78415452819879e-01,-7.93210083326257e-02],[1.18035987634609e-01,+2.45615120500224e-02],[8.12721813043989e-02,+8.89567757119387e-02],[2.26856083517065e-02,+1.93436447059624e-01]]] )->using(0,1));
 
   ok_should_reuse_plan( all( approx( fft2($x_slice2_severed), $X_slice2_ref, approx_eps_double) ),
                         "2D FFTs threaded inside a 3D ndarray - slice2 - severed" );
@@ -375,7 +364,7 @@ my $Nplans = 0;
   # now go again with single precision. If $P() didn't physicalize its input,
   # this would no longer be aligned like before, since the input has shifted by
   # 4 bytes
-  ok_should_reuse_plan( all( approx( fft2(float $x_slice2_connected), float($X_slice2_ref), approx_eps_single) ),
+  ok_should_reuse_plan( all( approx( fft2(cfloat $x_slice2_connected), cfloat($X_slice2_ref), approx_eps_single) ),
                         "2D FFTs threaded inside a 3D ndarray - slice2 - connected - single precision" );
 
 
@@ -387,7 +376,7 @@ my $Nplans = 0;
                         "2D FFTs threaded inside a 3D ndarray - slice2 - connected - in-slice correct" );
 
   my $X_partialfft_ref = $x_orig->copy;
-  $X_partialfft_ref->slice(':,1:5,:,:') .= $x_slice2_connected;
+  $X_partialfft_ref->slice('1:5') .= $x_slice2_connected;
 
   ok( all( approx( $x, $X_partialfft_ref, approx_eps_double) ),
       "2D FFTs threaded inside a 3D ndarray - slice2 - connected - out-of-slice correct" );
@@ -395,10 +384,10 @@ my $Nplans = 0;
 
 # check the type logic
 {
-  my $x = sequence(10)->cat(sequence(10)**2)->mv(-1,0);
+  my $x = PDL::czip(sequence(10), sequence(10)**2);
 
   # from octave: conj( fft( (0:9) + i* ((0:9).**2) )' )
-  my $Xref = pdl( [45.0000000000000,+285.0000000000000],
+  my $Xref = PDL::czip(pdl( [45.0000000000000,+285.0000000000000],
                   [-158.8841768587627,+17.7490974608742],
                   [-73.8190960235587,-28.6459544426446],
                   [-41.3271264002680,-38.7279671349711],
@@ -407,7 +396,7 @@ my $Nplans = 0;
                   [11.2459848116453,-46.0967344361641],
                   [31.3271264002680,-45.9933924150247],
                   [63.8190960235587,-42.4097736473563],
-                  [148.8841768587627,-13.0277379108784] );
+                  [148.8841768587627,-13.0277379108784] )->using(0,1));
 
   my $f = null;
   my $F;
@@ -419,22 +408,13 @@ my $Nplans = 0;
       "Unspecified FFTs should be double-precision" );
 
   $f = null;
-  $F = fft1($x->float, $f);
+  $F = fft1($x->cfloat, $f);
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
                         "Float input/Unspecified output baseline" );
   ok( ! $PDL::FFTW3::_last_do_double_precision,
       "Float input/Unspecified output should do a float FFT" );
-  ok( $F->type == float,
-      "Float input/Unspecified output should return a float" );
-
-  $f = null;
-  $F = fft1($x->byte, $f);
-  ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
-                        "Byte input/Unspecified output baseline" );
-  ok( ! $PDL::FFTW3::_last_do_double_precision,
-      "Byte input/Unspecified output should do a float FFT" );
-  ok( $F->type == float,
-      "Byte input/Unspecified output should return a float" );
+  is( $F->type, cfloat,
+      "CFloat input/Unspecified output should return a cfloat" );
 
   $f = $x->zeros;
   fft1($x, $f);
@@ -443,19 +423,19 @@ my $Nplans = 0;
   ok( $PDL::FFTW3::_last_do_double_precision,
       "double input/double output should do a double FFT" );
 
-  $f = $x->zeros->float;
+  $f = $x->zeros->cfloat;
   fft1($x, $f);
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_single) ),
                         "double input/float output baseline" );
   ok( ! $PDL::FFTW3::_last_do_double_precision,
-      "double input/float output should do a float FFT" );
+      "double input/cfloat output should do a float FFT" );
 
   $f = $x->zeros->byte;
   eval { fft1($x, $f) };
   ok( $@, "Output to 'byte' should fail");
 
   $f = $x->zeros;
-  fft1($x->float, $f->double );
+  fft1($x->cfloat, $f->cdouble );
   ok_should_reuse_plan( all( approx( $f, $Xref, approx_eps_double) ),
                         "float input/double output baseline" );
   ok( $PDL::FFTW3::_last_do_double_precision,

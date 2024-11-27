@@ -314,8 +314,7 @@ EOF
   # I now have the arguments and the plan. Go!
   my $internal_function = 'PDL::__';
   $internal_function .=
-    ($is_native && !$is_real_fft) ? 'N' :
-    !$is_real_fft ? '' :
+    !$is_real_fft ? 'N' :
     ($is_native && $do_inverse_fft) ? 'irN' :
     $do_inverse_fft ? barf("irfft no longer supports PDL::Complex") :
     ($is_native_output) ? 'rN' :
@@ -414,14 +413,7 @@ sub validateArgumentDimensions_complex
 {
   my ( $rank, $thisfunction, $arg ) = @_;
   my $is_native = !$arg->type->real;
-
-  # complex FFT. Identically-sized inputs/outputs
-  barf <<EOF if !$is_native and $arg->dim(0) != 2;
-$thisfunction must have dim(0) == 2 for non-native complex inputs and outputs.
-This is the (real,imag) dimension. Giving up.
-EOF
-
-  my $dims_cmp = $arg->ndims - ($is_native ? 0 : 1);
+  my $dims_cmp = $arg->ndims;
   barf <<EOF if $dims_cmp < $rank;
 Tried to compute a $rank-dimensional FFT, but an array has fewer than $rank dimensions.
 Giving up.
@@ -431,7 +423,6 @@ EOF
 sub validateArgumentDimensions_real {
   my ( $rank, $do_inverse_fft, $is_native_output, $thisfunction, $iarg, $arg ) = @_;
   my $is_native = !$arg->type->real; # native complex
-#use Carp; use Test::More; diag "vAD_r ($arg)($is_native) ", $arg->info;
 
   # real FFT. Forward transform takes in real and spits out complex;
   # backward transform does the reverse
@@ -571,7 +562,6 @@ sub getPlan
   {
     # complex FFT
     @dims = $in->dims;
-    shift @dims if $in->type->real; # ignore first dimension which is (real, imag)
   }
   elsif( !$do_inverse_fft )
   {
@@ -725,10 +715,6 @@ sub generateDefinitions
   # (real,imag) complex pair
   my @dims = map "n$_", 1..$rank;
   unshift @dims, 'n0=2';
-  my $dims_string = join(',', @dims);
-  $pp_def{Pars} = "in($dims_string); [o]out($dims_string);";
-  $pp_def{Code} = $TEMPLATE_COMPLEX;
-  pp_def( "__fft$rank", %pp_def );
 
   ##################################################################################
   ####### now I generate the definitions for the real-complex and complex-real cases
@@ -758,7 +744,7 @@ EOF
   ################################################################################
   ####### now native-complex version
   shift @dims; # drop the (real,imag) dim
-  $dims_string = join(',', @dims);
+  my $dims_string = join(',', @dims);
   delete $pp_def{RedoDimsCode};
   $pp_def{Pars} = "in($dims_string); [o]out($dims_string);";
   $pp_def{Code} = $TEMPLATE_COMPLEX;

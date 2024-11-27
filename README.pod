@@ -201,10 +201,9 @@ identical. The output parameter is optional and, if present, must be
 the last argument. If the output ndarray is passed in, the user I<must>
 make sure the dimensions match.
 
-If PDL 2.027+ "native complex" data is the input, the dimensions are as
-you'd expect. Otherwise, the 0 dim of the input PDL must have size 2 and
-run over (real,imaginary) components. The transform is carried out over
-the remaining dims.
+As of 0.20, inputs must be "native complex" data. Any type other
+than C<cfloat> or C<cdouble> will be converted in the normal PP
+way.
 
 The fftn form takes a minimum of two arguments: the PDL to transform,
 and the number of dimensions to transform as a separate argument.
