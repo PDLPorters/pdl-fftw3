@@ -104,6 +104,18 @@ pp_export_nothing();
 pp_addxs('', <<'EOXS');
 MODULE = PDL::FFTW3 PACKAGE = PDL::FFTW3
 
+SV *
+dump_plan(planIV)
+  IV planIV
+CODE:
+  void* plan = NUM2PTR(void *, planIV);
+  char *s = fftw_sprint_plan((const fftw_plan)plan);
+  if (!s) croak("Got NULL string from fftw_sprint_plan");
+  RETVAL = newSVpv(s, 0);
+  free(s);
+OUTPUT:
+  RETVAL
+
 IV
 compute_plan( dims_ref, do_double_precision, is_real_fft, do_inverse_fft, in_pdl, out_pdl, in_alignment, out_alignment )
   SV*  dims_ref
