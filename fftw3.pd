@@ -157,12 +157,12 @@ CODE:
     if( !do_double_precision )
       plan =
         fftwf_plan_dft( rank, dims_row_first,
-                        NUM2PTR(fftwf_complex*, in_data), NUM2PTR(fftwf_complex*, out_data),
+                        NUM2PTR(void*, in_data), NUM2PTR(void*, out_data),
                         direction, FFTW_ESTIMATE);
     else
       plan =
         fftw_plan_dft( rank, dims_row_first,
-                       NUM2PTR(fftw_complex*, in_data), NUM2PTR(fftw_complex*, out_data),
+                       NUM2PTR(void*, in_data), NUM2PTR(void*, out_data),
                        direction, FFTW_ESTIMATE);
   }
   else
@@ -173,12 +173,12 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftwf_plan_dft_r2c( rank, dims_row_first,
-                              NUM2PTR(float*, in_data), NUM2PTR(fftwf_complex*, out_data),
+                              NUM2PTR(void*, in_data), NUM2PTR(void*, out_data),
                               FFTW_ESTIMATE );
       else
         plan =
           fftwf_plan_dft_c2r( rank, dims_row_first,
-                              NUM2PTR(fftwf_complex*, in_data), NUM2PTR(float*, out_data),
+                              NUM2PTR(void*, in_data), NUM2PTR(void*, out_data),
                               FFTW_ESTIMATE );
     }
     else
@@ -186,12 +186,12 @@ CODE:
       if( !do_inverse_fft )
         plan =
           fftw_plan_dft_r2c( rank, dims_row_first,
-                             NUM2PTR(double*, in_data), NUM2PTR(fftw_complex*, out_data),
+                             NUM2PTR(void*, in_data), NUM2PTR(void*, out_data),
                              FFTW_ESTIMATE );
       else
         plan =
           fftw_plan_dft_c2r( rank, dims_row_first,
-                             NUM2PTR(fftw_complex*, in_data), NUM2PTR(double*, out_data),
+                             NUM2PTR(void*, in_data), NUM2PTR(void*, out_data),
                              FFTW_ESTIMATE );
     }
   }
