@@ -67,6 +67,7 @@ $descriptor{BUILD_REQUIRES} = {'PDL::PP'=>0};
 $descriptor{AUTHOR} = "Dima Kogan <dima\@secretsauce.net>, Craig DeForest <deforest\@boulder.swri.edu>";
 $descriptor{ABSTRACT} = "PDL interface to the Fastest Fourier Transform in the West";
 $descriptor{LICENSE}  = "gpl_3";
+$descriptor{MIN_PERL_VERSION}  = "5.016";
 
 $descriptor{META_MERGE} = {
   "meta-spec" => { version => 2 },
