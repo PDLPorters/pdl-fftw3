@@ -564,8 +564,7 @@ sub getPlan
     @dims = $out->dims;
   }
 
-  my $Nslices = reduce {$a*$b} splice(@dims, $rank);
-  $Nslices = 1 unless defined $Nslices;
+  my $Nslices = reduce {$a*$b} 1, splice(@dims, $rank);
 
   my $do_double_precision = ($in->get_datatype == $PDL_F || $in->get_datatype == $PDL_CF)
     ? 0 : 1;
