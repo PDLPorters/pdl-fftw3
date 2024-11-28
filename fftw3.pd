@@ -65,9 +65,9 @@ EOF
 my $TEMPLATE_COMPLEX = <<'EOF';
 // This is the template used by PP to generate the FFTW routines.
 // make sure the PDL data type I'm using matches the FFTW data type
-static_assert_fftw(sizeof($GENERIC())*2 == sizeof($TFD(fftwf_,fftw_)complex));
-$TFD(fftwf_,fftw_)plan plan = INT2PTR($TFD(fftwf_,fftw_)plan, $COMP(plan));
-$TFD(fftwf_,fftw_)execute_dft(plan, (void*)$P(in), (void*)$P(out));
+static_assert_fftw(sizeof($GENERIC()) == sizeof($TGC(fftwf_,fftw_)complex));
+$TGC(fftwf_,fftw_)plan plan = INT2PTR($TGC(fftwf_,fftw_)plan, $COMP(plan));
+$TGC(fftwf_,fftw_)execute_dft(plan, (void*)$P(in), (void*)$P(out));
 EOF
 
 # I define up to rank-10 FFTs. This is annoyingly arbitrary, but hopefully
@@ -730,8 +730,6 @@ EOF
   delete $pp_def{RedoDimsCode};
   $pp_def{Pars} = "in($dims_string); [o]out($dims_string);";
   $pp_def{Code} = $TEMPLATE_COMPLEX;
-  $pp_def{Code} =~ s/TFD/TGC/g;
-  $pp_def{Code} =~ s/\*2//g; # the sizeof-doubling
   $pp_def{GenericTypes} = [qw(G C)];
   pp_def( "__Nfft$rank", %pp_def );
 
