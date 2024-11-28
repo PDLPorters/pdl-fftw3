@@ -59,11 +59,12 @@ $descriptor{PREREQ_PM} = {
   'PDL' => '2.049', # as_native
 };
 $descriptor{CONFIGURE_REQUIRES} = {
-  'PDL::Core::Dev' =>0,
+  'PDL' => '2.049',
   'IPC::Run'       =>0,
 #  'Alien::FFTW3'   =>0,
 };
 $descriptor{BUILD_REQUIRES} = {'PDL::PP'=>0};
+$descriptor{TEST_REQUIRES} = {'Test::More'=>'0.88'};
 $descriptor{AUTHOR} = "Dima Kogan <dima\@secretsauce.net>, Craig DeForest <deforest\@boulder.swri.edu>";
 $descriptor{ABSTRACT} = "PDL interface to the Fastest Fourier Transform in the West";
 $descriptor{LICENSE}  = "gpl_3";
