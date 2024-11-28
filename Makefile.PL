@@ -46,8 +46,6 @@ my @package = (qw(fftw3.pd FFTW3 PDL::FFTW3), undef, 1);
 my %descriptor = pdlpp_stdargs(\@package);
 
 $descriptor{VERSION_FROM} = 'fftw3.pd';
-$descriptor{OPTIMIZE}  = ($Config{ccname} =~ m/gcc/) ? '-O2' : $Config{optimize};
-$descriptor{CCFLAGS} .= ( ($Config{ccname} =~ m/gcc/) ? '--std=gnu99 ' : '' ) . $Config{ccflags};
 
 # I support single and double precision FFTW calls, so both fftw and fftw3f
 push @{$descriptor{LIBS}  },  $libs;

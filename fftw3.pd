@@ -47,14 +47,14 @@ $TFD(fftwf_,fftw_)plan plan = INT2PTR($TFD(fftwf_,fftw_)plan, $COMP(plan));
 $TFD(fftwf_,fftw_)execute_dft_r2c(plan, (void*)$P(real), (void*)$P(complexv));
 EOF
 my $TEMPLATE_REAL_C2R = <<'EOF';
-// RANK is replaced with the rank of this transform
 // make sure the PDL data type I'm using matches the FFTW data type
 static_assert_fftw(sizeof($GENERIC()) == sizeof($TGC(fftwf_,fftw_)complex));
 $TGC(fftwf_,fftw_)plan plan = INT2PTR($TGC(fftwf_,fftw_)plan, $COMP(plan));
 // FFTW inverse real transforms clobber their input. I thus make a new
 // buffer and transform from there
 unsigned long nelem = 1;
-for( int i=0; i<=RANK; i++ )
+PDL_Indx i, rank = $PRIV(vtable)->par_realdims[0];
+for( i=0; i<rank; i++ )
   nelem *= $PDL(complexv)->dims[i];
 unsigned long elem_scale = sizeof($GENERIC()) / sizeof( $TGC(float,double) ); /* native complex */
 void *input_copy = $TGC(fftwf_,fftw_)alloc_real( nelem * elem_scale );
@@ -760,7 +760,7 @@ if( $PDL(real)->dims[0] <= 0 )
   $SIZE(n1) = 2*$PDL(complexv)->dims[0] - 2;
 EOF
   $pp_def{Pars} = "complexv($dims_complex_string); real [o]real($dims_real_string);";
-  $pp_def{Code} = $TEMPLATE_REAL_C2R =~ s/RANK/$rank-1/gre;
+  $pp_def{Code} = $TEMPLATE_REAL_C2R;
   $pp_def{GenericTypes} = [qw(G C)];
   pp_def( "__irNfft$rank", %pp_def );
 }
