@@ -284,8 +284,8 @@ EOF
   # to have the ndarray made to create plans. If I don't, the alignment may
   # differ between plan-time and run-time
   if ( $out->isnull ) {
-    my @args = getOutArgs($in, $is_real_fft, $do_inverse_fft, $is_native_output);
-    $out .= zeros(@args);
+    my ($type, @dims) = getOutArgs($in, $is_real_fft, $do_inverse_fft, $is_native_output);
+    $out->set_datatype($type->enum); $out->setdims(\@dims); $out->make_physical;
   }
 
   validateArguments( $rank, $is_real_fft, $do_inverse_fft, $is_native_output, $thisfunction, $in, $out );
