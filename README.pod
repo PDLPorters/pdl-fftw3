@@ -243,9 +243,12 @@ The following are equivalent:
  $X = rfft1( $x );
  rfft1( $x, my $X = $x->zeroes );
 
+As of 0.20, only returns native-complex data. Support for PDL::Complex
+has been removed.
+
 =head2 rNfftX (rNfft1, rNfft2, rNfft3, ..., rNfftn)
 
-Similar to the above, but returns native-complex ndarrays.
+As of 0.20, just an alias for rfftX, etc.
 
 =head2 irfftX (irfft1, irfft2, irfft3, ..., irfftn)
 

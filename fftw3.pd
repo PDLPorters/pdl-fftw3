@@ -236,8 +236,6 @@ my %existingPlans :shared;
 our $_Nplans = 0;
 our $_last_do_double_precision;
 
-# This file is included verbatim into the final module via pp_addpm()
-
 # This is a function that sits between the user's call into this module and the
 # PP-generated internals. Specifically, this function is called BEFORE any PDL
 # threading happens. Here I make sure the FFTW plan exists, or if it doesn't, I
@@ -245,7 +243,7 @@ our $_last_do_double_precision;
 sub __fft_internal {
   my $thisfunction = shift;
 
-  my ($do_inverse_fft, $is_real_fft, $is_native_output, $rank) = $thisfunction =~ /^(i?)(r?)(N?).*fft([0-9]+)/;
+  my ($do_inverse_fft, $is_real_fft, $rank) = $thisfunction =~ /^(i?)(r?)N?.*fft([0-9]+)/;
 
   # first I parse the variables. This is a very direct translation of what PP
   # does normally. Plan-creation has to be outside of PP, so I must re-do this
@@ -278,17 +276,17 @@ EOF
   # make sure the in/out types match. Convert $in if needed. This needs to
   # happen before we instantiate $out (if it's null) to make sure we know the
   # type
-  processTypes( $thisfunction, $is_native_output, \$in, \$out );
+  processTypes( $thisfunction, \$in, \$out );
 
   # I now create an ndarray for the null output. Normally PP does this, but I need
   # to have the ndarray made to create plans. If I don't, the alignment may
   # differ between plan-time and run-time
   if ( $out->isnull ) {
-    my ($type, @dims) = getOutArgs($in, $is_real_fft, $do_inverse_fft, $is_native_output);
+    my ($type, @dims) = getOutArgs($in, $is_real_fft, $do_inverse_fft);
     $out->set_datatype($type->enum); $out->setdims(\@dims); $out->make_physical;
   }
 
-  validateArguments( $rank, $is_real_fft, $do_inverse_fft, $is_native_output, $thisfunction, $in, $out );
+  validateArguments( $rank, $is_real_fft, $do_inverse_fft, $thisfunction, $in, $out );
 
   # I need to physical-ize the ndarrays before I make a plan. Again, normally PP
   # does this, but to make sure alignments match, I need to do this myself, now
@@ -299,15 +297,13 @@ EOF
   barf "$thisfunction couldn't make a plan. Giving up\n" unless defined $plan;
 
   my $is_native = !$in->type->real; # native complex
-  $is_native_output ||= !$out->type->real;
   # I now have the arguments and the plan. Go!
   my $internal_function = 'PDL::__';
   $internal_function .=
     !$is_real_fft ? 'N' :
     ($is_native && $do_inverse_fft) ? 'irN' :
     $do_inverse_fft ? barf("irfft no longer supports PDL::Complex") :
-    ($is_native_output) ? 'rN' :
-    'r';
+    'rN';
   $internal_function .= "fft$rank";
   eval { no strict 'refs'; $internal_function->( $in, $out, $plan ) };
   barf $@ if $@;
@@ -315,7 +311,7 @@ EOF
 }
 
 sub getOutArgs {
-  my ($in, $is_real_fft, $do_inverse_fft, $is_native_output) = @_;
+  my ($in, $is_real_fft, $do_inverse_fft) = @_;
 
   my @dims = $in->dims;
   my $is_native = !$in->type->real;
@@ -326,11 +322,7 @@ sub getOutArgs {
   } elsif ( !$do_inverse_fft ) {
     # forward real fft
     $dims[0] = int($dims[0]/2)+1;
-    if ($is_native_output) {
-      $out_type = typeWithComplexity(getPrecision($out_type), $is_native_output);
-    } else {
-      unshift @dims, 2;
-    }
+    $out_type = typeWithComplexity(getPrecision($out_type), 1);
   } else {
     # backward real fft
     #
@@ -354,7 +346,7 @@ sub getOutArgs {
 
 sub validateArguments
 {
-  my ($rank, $is_real_fft, $do_inverse_fft, $is_native_output, $thisfunction, $in, $out) = @_;
+  my ($rank, $is_real_fft, $do_inverse_fft, $thisfunction, $in, $out) = @_;
 
   for my $arg ( $in, $out )
   {
@@ -387,7 +379,7 @@ EOF
     if( !$is_real_fft )
     { validateArgumentDimensions_complex( $rank, $thisfunction, $arg); }
     else
-    { validateArgumentDimensions_real( $rank, $do_inverse_fft, $is_native_output, $thisfunction, $iarg, $arg); }
+    { validateArgumentDimensions_real( $rank, $do_inverse_fft, $thisfunction, $iarg, $arg); }
   }
 
   # we have an explicit output ndarray we're filling in. Make sure the
@@ -395,7 +387,7 @@ EOF
   if ( !$is_real_fft )
   { matchDimensions_complex($thisfunction, $rank, $in, $out); }
   else
-  { matchDimensions_real($thisfunction, $rank, $do_inverse_fft, $is_native_output, $in, $out); }
+  { matchDimensions_real($thisfunction, $rank, $do_inverse_fft, $in, $out); }
 }
 
 sub validateArgumentDimensions_complex
@@ -411,14 +403,14 @@ EOF
 }
 
 sub validateArgumentDimensions_real {
-  my ( $rank, $do_inverse_fft, $is_native_output, $thisfunction, $iarg, $arg ) = @_;
+  my ( $rank, $do_inverse_fft, $thisfunction, $iarg, $arg ) = @_;
   my $is_native = !$arg->type->real; # native complex
 
   # real FFT. Forward transform takes in real and spits out complex;
   # backward transform does the reverse
   if (!!$do_inverse_fft == !!($iarg == 0)) { # need complex for this
     my ($verb, $var, $reason) = ($iarg == 0) ? qw(takes input) : qw(produces output);
-    if ( ($iarg == 1 && $is_native_output && !$is_native) ||
+    if ( ($iarg == 1 && !$is_native) ||
       ($iarg == 0 && !$is_native)
     ) {
       $reason = "\$$var should be native-complex";
@@ -431,18 +423,7 @@ but it's not (in @{[$arg->info]}: $arg). Giving up.
 EOF
   }
 
-  my ($min_dimensionality, $var) = $rank;
-  if( $iarg == 0 ) {
-    # The input needs at least $rank dimensions. If this is a backward
-    # transform, the input is complex, so it needs an extra dimension
-    $min_dimensionality++ if $do_inverse_fft && !$is_native;
-    $var = 'input';
-  } else {
-    # The output needs at least $rank dimensions. If this is a forward
-    # transform, the output is complex, so it needs an extra dimension
-    $min_dimensionality++ if !$do_inverse_fft && !$is_native_output;
-    $var = 'output';
-  }
+  my ($min_dimensionality, $var) = ($rank, $iarg == 0 ? 'input' : 'output');
   if ( $arg->ndims < $min_dimensionality ) {
     barf <<EOF;
 $thisfunction: The $var needs at least $min_dimensionality dimensions, but
@@ -464,11 +445,10 @@ EOF
 }
 
 sub matchDimensions_real {
-  my ($thisfunction, $rank, $do_inverse_fft, $is_native_output, $in, $out) = @_;
+  my ($thisfunction, $rank, $do_inverse_fft, $in, $out) = @_;
   my ($varname1, $varname2, $var1, $var2);
   if ( !$do_inverse_fft ) {
-    # Forward FFT. The input is real, the output is complex. $output->dim(0)
-    # == 2, since that's the (real, imag) dimension. Furthermore,
+    # Forward FFT. The input is real, the output is complex.
     # $output->dim(1) should be int($input->dim(0)/2) + 1 (Section 2.4 of
     # the FFTW3 documentation)
     ($varname1, $varname2, $var1, $var2) = (qw(input output), $in, $out);
@@ -476,16 +456,15 @@ sub matchDimensions_real {
     # Backward FFT. The input is complex, the output is real.
     ($varname1, $varname2, $var1, $var2) = (qw(output input), $out, $in);
   }
-  my $is_native = !$var2->type->real || $is_native_output; # native complex
-  barf <<EOF if int($var1->dim(0)/2) + 1 != $var2->dim($is_native ? 0 : 1);
+  barf <<EOF if int($var1->dim(0)/2) + 1 != $var2->dim(0);
 $thisfunction: mismatched first dimension:
-\$$varname2->dim(1) == int(\$$varname1->dim(0)/2) + 1 wasn't true.
+\$$varname2->dim(0) == int(\$$varname1->dim(0)/2) + 1 wasn't true.
 $varname1: @{[$var1->info]}
 $varname2: @{[$var2->info]}
 Giving up.
 EOF
   for my $idim (1..$rank-1) {
-    if ( $var1->dim($idim) != $var2->dim($idim + ($is_native ? 0 : 1)) ) {
+    if ( $var1->dim($idim) != $var2->dim($idim) ) {
       barf <<EOF;
 $thisfunction was given input/output matrices of non-matching sizes.
 Giving up.
@@ -496,7 +475,7 @@ EOF
 
 sub processTypes
 {
-  my ($thisfunction, $is_native_output, $in, $out) = @_;
+  my ($thisfunction, $in, $out) = @_;
 
   # types:
   #
@@ -549,23 +528,7 @@ sub getPlan
   # I get the plan ID, check if I already have a plan, and make a new plan if I
   # don't already have one
 
-  my @dims; # the dimensionality of the FFT
-  if( !$is_real_fft )
-  {
-    # complex FFT
-    @dims = $in->dims;
-  }
-  elsif( !$do_inverse_fft )
-  {
-    # forward real FFT - the input IS the dimensionality
-    @dims = $in->dims;
-  }
-  else
-  {
-    # backward real FFT
-    # we're given an output, and this is the dimensionality
-    @dims = $out->dims;
-  }
+  my @dims = ((!$is_real_fft || !$do_inverse_fft) ? $in : $out)->dims; # FFT dimensionality
 
   my $Nslices = reduce {$a*$b} 1, splice(@dims, $rank);
 
@@ -611,8 +574,7 @@ EOINCLUDE
 
 for my $rank (1..$maxrank)
 {
-  my $shapestr = sprintf(q{$a->shape->slice('1:%d')->prodover},$rank);
-  my $rshapestr = sprintf(q{$a->shape->slice('0:%d')->prodover},$rank-1);
+  my $shapestr = sprintf(q{$a->shape->slice('0:%d')->prodover},$rank-1);
 
   pp_addpm({At => 'Bot'}, pp_line_numbers(__LINE__, <<EOF));
 sub fft$rank { __fft_internal( "fft$rank",\@_ ); }
@@ -620,7 +582,7 @@ sub fft$rank { __fft_internal( "fft$rank",\@_ ); }
 
 sub ifft$rank {
   my \$a = __fft_internal( "ifft$rank", \@_ );
-  \$a /= \$_[0]->type->real ? $shapestr : $rshapestr;
+  \$a /= $shapestr;
   \$a;
 }
 *PDL::ifft$rank = \\&ifft$rank;
@@ -631,7 +593,7 @@ sub rfft$rank { __fft_internal( "rfft$rank", \@_ ); }
 sub rNfft$rank { __fft_internal( "rNfft$rank", \@_ ); }
 *PDL::rNfft$rank = \\&rNfft$rank;
 
-sub irfft$rank { my \$a = __fft_internal( "irfft$rank", \@_ ); \$a /= $rshapestr; \$a; }
+sub irfft$rank { my \$a = __fft_internal( "irfft$rank", \@_ ); \$a /= $shapestr; \$a; }
 *PDL::irfft$rank = \\&irfft$rank;
 EOF
 
@@ -646,7 +608,6 @@ pp_addpm({At=> 'Bot'}, pp_line_numbers(__LINE__, sprintf <<'EOF', $maxrank));
 sub _rank_springboard {
   my ($name, $source, $rank, @rest) = @_;
   my $inverse = ($name =~ m/^i/);
-  my $real    = ($name =~ m/r/) || !$source->type->real;
 
   unless(defined $rank) {
     die "${name}n: second argument must be the rank of the transform you want";
@@ -656,8 +617,8 @@ sub _rank_springboard {
     die "${name}n: second argument (rank) must be between 1 and %d";
   }
 
-  my $active_lo = ($real ? 0 : 1);
-  my $active_hi = ($real ? $rank-1 : $rank);
+  my $active_lo = 0;
+  my $active_hi = $rank-1;
 
   unless($source->ndims > $active_hi) {
     die "${name}n: rank is $rank but input has only ".($active_hi-$active_lo)." active dims!";
@@ -692,7 +653,6 @@ sub generateDefinitions
 
   my %pp_def = (
     HandleBad => 0,
-    GenericTypes => [qw(F D)],
     OtherPars    => 'IV plan', # comes from pre-fft code not user
     # this is a private function so I don't want to create
     # user-visible documentation or exports
@@ -702,47 +662,26 @@ sub generateDefinitions
 
   ################################################################################
   ####### first I generate the definitions for the simple complex-complex FFT case
-  # make dimension string 'n0=2,n1,n2,n3,n4...'. The leading 2 is for the
-  # (real,imag) complex pair
-  my @dims = map "n$_", 1..$rank;
-  unshift @dims, 'n0=2';
-
-  ##################################################################################
-  ####### now I generate the definitions for the real-complex and complex-real cases
-  my @dims_real    = @dims;
-  my @dims_complex = @dims;
-  shift @dims_real; # get rid of the (real,imag) dimension for the real numbers
-  $dims_complex[1] = 'nhalf'; # first complex dim is real->dim(0)/2+1
-  my $dims_real_string    = join(',', @dims_real);
-  my $dims_complex_string = join(',', @dims_complex);
-
-  # forward
-  # I have the real dimensions, but not nhalf
-  $pp_def{RedoDimsCode} = <<'EOF';
-if( $PDL(complexv)->ndims <= 1 || $PDL(complexv)->dims[1] <= 0 )
-  $SIZE(nhalf) = (int)( $PDL(real)->dims[0]/2 ) + 1;
-EOF
-  $pp_def{Pars} = "real($dims_real_string); [o]complexv($dims_complex_string);";
-  $pp_def{Code} = $TEMPLATE_REAL_R2C;
-  pp_def( "__rfft$rank", %pp_def );
-
-  ################################################################################
-  ####### now native-complex version
-  shift @dims; # drop the (real,imag) dim
+  # make dimension string 'n1,n2,n3,n4...'.
+  my @dims_real = my @dims_complex = my @dims = map "n$_", 1..$rank;
   my $dims_string = join(',', @dims);
-  delete $pp_def{RedoDimsCode};
   $pp_def{Pars} = "in($dims_string); [o]out($dims_string);";
-  $pp_def{Code} = $TEMPLATE_COMPLEX;
   $pp_def{GenericTypes} = [qw(G C)];
-  pp_def( "__Nfft$rank", %pp_def );
+  pp_def( "__Nfft$rank", %pp_def, Code => $TEMPLATE_COMPLEX );
 
   ##################################################################################
   ####### real-native complex and native complex-real
-  @dims_real    = @dims;
-  @dims_complex = @dims;
   $dims_complex[0] = 'nhalf'; # first complex dim is real->dim(0)/2+1
-  $dims_real_string    = join(',', @dims_real);
-  $dims_complex_string = join(',', @dims_complex);
+  my $dims_real_string    = join(',', @dims_real);
+  my $dims_complex_string = join(',', @dims_complex);
+
+  # backward
+  $pp_def{RedoDimsCode} = <<'EOF';
+if( $PDL(real)->dims[0] <= 0 )
+  $SIZE(n1) = 2*$PDL(complexv)->dims[0] - 2;
+EOF
+  $pp_def{Pars} = "complexv($dims_complex_string); real [o]real($dims_real_string);";
+  pp_def( "__irNfft$rank", %pp_def, Code => $TEMPLATE_REAL_C2R );
 
   # forward
   $pp_def{RedoDimsCode} = <<'EOF';
@@ -750,10 +689,10 @@ if( $PDL(complexv)->ndims <= 1 || $PDL(complexv)->dims[1] <= 0 )
   $SIZE(nhalf) = (int)( $PDL(real)->dims[0]/2 ) + 1;
 EOF
   $pp_def{Pars} = "real($dims_real_string); complex [o]complexv($dims_complex_string);";
-  $pp_def{Code} = $TEMPLATE_REAL_R2C;
   $pp_def{GenericTypes} = [qw(F D)];
   pp_def("__rNfft$rank",
     %pp_def,
+    Code => $TEMPLATE_REAL_R2C,
     NewXSTypeCoerceNS => <<'EOF',
   $PRIV(__datatype) = $PDL(real)->datatype;
   pdl_transvtable *vtable = $PRIV(vtable);
@@ -762,16 +701,6 @@ EOF
   for (i=vtable->nparents; i<vtable->npdls; i++) pdls[i+nchildren] = pdls[i];
 EOF
   );
-
-  # backward
-  $pp_def{RedoDimsCode} = <<'EOF';
-if( $PDL(real)->dims[0] <= 0 )
-  $SIZE(n1) = 2*$PDL(complexv)->dims[0] - 2;
-EOF
-  $pp_def{Pars} = "complexv($dims_complex_string); real [o]real($dims_real_string);";
-  $pp_def{Code} = $TEMPLATE_REAL_C2R;
-  $pp_def{GenericTypes} = [qw(G C)];
-  pp_def( "__irNfft$rank", %pp_def );
 }
 
 sub slurp {
