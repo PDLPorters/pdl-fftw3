@@ -621,30 +621,39 @@ my $Nplans = 0;
     ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline forward" );
     eval { rfft1( inplace sequence(6) ) };
     ok( $@, "real ffts shouldn't work inplace - forward" );
+    eval { rNfft1( sequence(6) ) };
+    ok_should_reuse_plan( ! $@, "real->N ffts shouldn't work inplace - baseline forward" );
+    eval { rNfft1( inplace sequence(6) ) };
+    like $@, qr/in-place real FFTs are not supported/, "real->N ffts shouldn't work inplace - forward";
   }
 
   {
     eval { irfft1( sequence(cdouble,4) ) };
     ok_should_reuse_plan( ! $@, "real ffts shouldn't work inplace - baseline backward" );
-    eval { irfft1( inplace sequence(2,4) ) };
-    ok( $@, "real ffts shouldn't work inplace - backward" );
+    eval { irfft1( inplace sequence(cdouble,4) ) };
+    like $@, qr/in-place real FFTs are not supported/, "real ffts shouldn't work inplace - backward";
   }
 
   {
     eval { rfft1( sequence(7), sequence(2,4) ) };
     ok_should_reuse_plan( ! $@, "real fft dims - baseline");
-
     eval { rfft1( sequence(7), sequence(3,4) ) };
-    ok( $@, "real fft dimensionality 1");
-
+    like $@, qr/produces complex output/, "real fft dimensionality 1";
     eval { rfft1( sequence(7), sequence(1,4) ) };
-    ok( $@, "real fft dimensionality 2");
-
+    like $@, qr/produces complex output/, "real fft dimensionality 2";
     eval { rfft1( sequence(7), sequence(2,5) ) };
-    ok( $@, "real fft dimensionality 3");
-
+    like $@, qr/mismatched first dimension/, "real fft dimensionality 3";
     eval { rfft1( sequence(7), sequence(2,3) ) };
-    ok( $@, "real fft dimensionality 4");
+    like $@, qr/mismatched first dimension/, "real fft dimensionality 4";
+
+    eval { rNfft1( sequence(7), sequence(4) ) };
+    like $@, qr/produces complex output/, "real->N fft type";
+    eval { rNfft1( sequence(7), sequence(cdouble,4) ) };
+    ok_should_reuse_plan( ! $@, "real fft dims - baseline");
+    eval { rNfft1( sequence(7), sequence(cdouble,5) ) };
+    like $@, qr/mismatched first dimension/, "real->N fft dimensionality 1";
+    eval { rNfft1( sequence(7), sequence(cdouble,3) ) };
+    like $@, qr/mismatched first dimension/, "real->N fft dimensionality 2";
   }
 
   {

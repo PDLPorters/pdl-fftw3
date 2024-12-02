@@ -401,7 +401,8 @@ EOF
 sub validateArgumentDimensions_complex
 {
   my ( $rank, $thisfunction, $arg ) = @_;
-  my $is_native = !$arg->type->real;
+  barf "Tried to compute a complex FFT, but non-native-complex argument given"
+    if $arg->type->real;
   my $dims_cmp = $arg->ndims;
   barf <<EOF if $dims_cmp < $rank;
 Tried to compute a $rank-dimensional FFT, but an array has fewer than $rank dimensions.
@@ -415,16 +416,18 @@ sub validateArgumentDimensions_real {
 
   # real FFT. Forward transform takes in real and spits out complex;
   # backward transform does the reverse
-  if ( !$is_native && $arg->dim(0) != 2 ) {
-    my ($verb, $var);
-    if ( !$is_native_output && !$do_inverse_fft && $iarg == 1 ) {
-      ($verb, $var) = qw(produces output);
-    } elsif ( $do_inverse_fft && $iarg == 0 ) {
-      ($verb, $var) = qw(takes input);
+  if (!!$do_inverse_fft == !!($iarg == 0)) { # need complex for this
+    my ($verb, $var, $reason) = ($iarg == 0) ? qw(takes input) : qw(produces output);
+    if ( ($iarg == 1 && $is_native_output && !$is_native) ||
+      ($iarg == 0 && !$is_native)
+    ) {
+      $reason = "\$$var should be native-complex";
+    } elsif (!$is_native && $arg->dim(0) != 2) {
+      $reason = "\$$var->dim(0) == 2 should be true";
     }
-    barf <<EOF if $verb;
-$thisfunction $verb complex $var, so \$$var->dim(0) == 2 should be true,
-but it's not (in @{[$arg->info]}: $arg). This is the (real,imag) dimension. Giving up.
+    barf <<EOF if $reason;
+$thisfunction $verb complex $var, so $reason,
+but it's not (in @{[$arg->info]}: $arg). Giving up.
 EOF
   }
 
