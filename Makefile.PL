@@ -54,10 +54,10 @@ $descriptor{INC} = '' unless defined $descriptor{INC};
 $descriptor{INC} .= " $cflags";
 
 $descriptor{PREREQ_PM} = {
-  'PDL' => '2.075', # broadcastloop
+  'PDL' => '2.079', # CopyBadStatusCode changes and copying of converted pdls
 };
 $descriptor{CONFIGURE_REQUIRES} = {
-  'PDL' => '2.075',
+  'PDL' => '2.079',
   'IPC::Run'       =>0,
 #  'Alien::FFTW3'   =>0,
 };

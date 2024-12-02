@@ -471,6 +471,11 @@ my $Nplans = 0;
   ok_should_make_plan( all( approx( $fx6, $fx6_ref_input, approx_eps_double) ),
                        "rfft basic test - native forward - 6long" );
 
+  $fx6 = rNfft1($x6->float);
+  ok_should_make_plan( all( approx( $fx6, $fx6_ref_input->cfloat, approx_eps_single) ),
+                       "rNfft - native float forward - 6long" )
+    or diag "Got: $fx6\nExpected: ", $fx6_ref_input->cfloat;
+
   my $fx7 = rNfft1($x7);
   ok_should_make_plan( all( approx( $fx7, $fx7_ref->slice('0:3'), approx_eps_double) ),
                        "rfft basic test - forward - 7long" );
