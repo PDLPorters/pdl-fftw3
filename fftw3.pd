@@ -196,10 +196,10 @@ OUTPUT:
 
 
 #define _get_data_alignment_int( x )            \
- ( x %  16 == 0 ) ? 16 :                        \
- ( x %  8  == 0 ) ?  8 :                        \
- ( x %  4  == 0 ) ?  4 :                        \
- ( x %  2  == 0 ) ?  2 : 1;
+ ( (x & 0xF) == 0 ) ? 16 :                      \
+ ( (x & 0x7) == 0 ) ?  8 :                      \
+ ( (x & 0x3) == 0 ) ?  4 :                      \
+ ( (x & 0x1) == 0 ) ?  2 : 1;
 
 int
 get_data_alignment_int( x )
