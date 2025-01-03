@@ -693,13 +693,6 @@ EOF
   pp_def("__rNfft$rank",
     %pp_def,
     Code => $TEMPLATE_REAL_R2C,
-    NewXSTypeCoerceNS => <<'EOF',
-  $PRIV(__datatype) = $PDL(real)->datatype;
-  pdl_transvtable *vtable = $PRIV(vtable);
-  PDL_Indx i, nchildren = vtable->npdls - vtable->nparents;
-  pdl **pdls = $PRIV(pdls);
-  for (i=vtable->nparents; i<vtable->npdls; i++) pdls[i+nchildren] = pdls[i];
-EOF
   );
 }
 
