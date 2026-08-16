@@ -113,7 +113,7 @@ this module have the C<N> in their name, so for instance a complex <-> complex
 always> be specified in this way; there is no function called simply C<fft>.
 
 In-place operation is supported for complex <-> complex functions, but not the
-real ones (real function don't have mathing dimensionality of the input and
+real ones (real functions don't have matching dimensionality of the input and
 output). An in-place transform of C<$x> can be computed with
 
  fft1( $x->inplace );
