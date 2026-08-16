@@ -118,7 +118,7 @@ output). An in-place transform of C<$x> can be computed with
 
  fft1( $x->inplace );
 
-All the functions in this module support PDL threading. For instance, if we have
+All the functions in this module support PDL broadcasting. For instance, if we have
 4 different image ndarrays C<$a>, C<$b>, C<$c>, C<$d> and we want to compute
 their 2D FFTs at the same time, we can say
 
